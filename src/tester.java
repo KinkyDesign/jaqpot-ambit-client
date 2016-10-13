@@ -29,11 +29,13 @@
  */
 
 import model.dataset.Dataset;
+import model.dataset.Substance;
 import model.dto.ambit.AmbitTask;
+import model.dto.bundle.BundleProperties;
+import model.dto.bundle.BundleSubstances;
+import model.dto.study.Studies;
 import org.apache.commons.io.IOUtils;
-import resource.AlgorithmResource;
-import resource.DatasetResource;
-import resource.TaskResource;
+import resource.*;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -55,6 +57,8 @@ class tester {
         DatasetResource datasetResource = new DatasetResource();
         TaskResource taskResource = new TaskResource();
         AlgorithmResource algorithmResource = new AlgorithmResource();
+        BundleResource bundleResource = new BundleResource();
+        SubstanceResource substanceResource = new SubstanceResource();
 
         URL pdbURL = null;
         try {
@@ -80,11 +84,15 @@ class tester {
             result=taskResource.getTask(result.getId());
         }
 
-        Dataset dataset = datasetResource.getDatasetByURI(result.getResult().split("dataset/")[1]);
+        Dataset dataset = datasetResource.getDatasetById(result.getResult().split("dataset/")[1]);
 
-        System.out.println(result.toString());
+        BundleProperties  bundleProperties = bundleResource.getProperties("1");
+        BundleSubstances bundleSubstances = bundleResource.getSubstances("1");
 
-        System.out.println(dataset.toString());
+        for (Substance substance : bundleSubstances.getSubstance()) {
+            Studies studies = substanceResource.getStudiesBySubstanceId(substance.getURI().split("substance/")[1]);
+            System.out.println(studies.getStudy().toString());
 
+        }
     }
 }

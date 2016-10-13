@@ -32,39 +32,39 @@ package resource;
 
 import client.AmbitClientFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import model.dto.ambit.AmbitTask;
-import model.dto.ambit.AmbitTaskArray;
+import model.dto.bundle.BundleProperties;
+import model.dto.bundle.BundleSubstances;
 import org.asynchttpclient.*;
 
+import javax.inject.Inject;
 import java.io.ByteArrayOutputStream;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-public class AlgorithmResource {
+/**
+ * Created by Angelos Valsamis on 13/10/2016.
+ */
+public class BundleResource {
 
-    private final String PATH = "https://apps.ideaconsult.net/enmtest/algorithm";
+    private ObjectMapper mapper;
 
-    public AlgorithmResource(){
+    public BundleResource(){
         mapper = new ObjectMapper();
         ambitClientFactory = new AmbitClientFactory();
     }
 
-    private ObjectMapper mapper;
-
     AmbitClientFactory ambitClientFactory;
 
-    public AmbitTask mopacOriginalStructure(String datasetURI, String options) {
+    public BundleSubstances getSubstances (String bundleId) {
 
-        String algorithmName="ambit2.mopac.MopacOriginalStructure";
-        AmbitTask bodyResponse=null;
+        String PATH = "https://apps.ideaconsult.net/enmtest/bundle";
+        BundleSubstances result = null;
         AsyncHttpClient c = ambitClientFactory.getClient();
 
-        Future<AmbitTaskArray> f = c
-                .preparePost(PATH+"/"+algorithmName)
-                .addFormParam("dataset_uri",datasetURI)
-                .addFormParam("mopac_commands", options)
+        Future<BundleSubstances> f = c
+                .prepareGet(PATH+"/"+bundleId+"/substance")
                 .addHeader("Accept","application/json")
-                .execute(new AsyncHandler<AmbitTaskArray>() {
+                .execute(new AsyncHandler<BundleSubstances>() {
 
                     private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
                     io.netty.handler.codec.http.HttpHeaders headers;
@@ -89,12 +89,79 @@ public class AlgorithmResource {
                     }
 
                     @Override
-                    public AmbitTaskArray onCompleted() throws Exception {
+                    public BundleSubstances onCompleted() throws Exception {
                         // Will be invoked once the response has been fully read or a ResponseComplete exception
                         // has been thrown.
                         // NOTE: should probably use Content-Encoding from headers
                         bytes.flush();
-                        return mapper.readValue(bytes.toByteArray(), AmbitTaskArray.class);
+                        return mapper.readValue(bytes.toByteArray(), BundleSubstances.class);
+                    }
+
+                    @Override
+                    public void onThrowable(Throwable t) {
+                    }
+
+                    @Override
+                    public State onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
+                        bytes.write(httpResponseBodyPart.getBodyPartBytes());
+                        bytes.flush();
+                        return State.CONTINUE;
+                    }
+                });
+
+        try {
+            result=f.get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        } finally {
+            ambitClientFactory.destroy();
+        }
+        return result;
+    }
+
+
+    public BundleProperties getProperties (String bundleId) {
+
+        String PATH = "https://apps.ideaconsult.net/enmtest/bundle";
+        ambitClientFactory = new AmbitClientFactory();
+
+        AsyncHttpClient c = ambitClientFactory.getClient();
+        BundleProperties result = null;
+        Future<BundleProperties> f = c
+                .prepareGet(PATH+"/"+bundleId+"/property")
+                .addHeader("Accept","application/json")
+                .execute(new AsyncHandler<BundleProperties>() {
+
+                    private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                    io.netty.handler.codec.http.HttpHeaders headers;
+
+                    @Override
+                    public State onStatusReceived(HttpResponseStatus status) throws Exception {
+                        int statusCode = status.getStatusCode();
+                        // The Status have been read
+                        // If you don't want to read the headers,body or stop processing the response
+                        if (statusCode >= 500) {
+                            return State.ABORT;
+                        }
+                        return State.CONTINUE;
+                    }
+
+                    @Override
+                    public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
+                        headers =  h.getHeaders();
+                        // The headers have been read
+                        // If you don't want to read the body, or stop processing the response
+                        return State.CONTINUE;
+                    }
+
+                    @Override
+                    public BundleProperties onCompleted() throws Exception {
+                        // Will be invoked once the response has been fully read or a ResponseComplete exception
+                        // has been thrown.
+                        // NOTE: should probably use Content-Encoding from headers
+                        bytes.flush();
+                        System.out.println(bytes.toString());
+                        return mapper.readValue(bytes.toByteArray(), BundleProperties.class);
                     }
 
                     @Override
@@ -109,12 +176,13 @@ public class AlgorithmResource {
                     }
                 });
         try {
-            bodyResponse=f.get().getTask().get(0);
+            result=f.get();
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         } finally {
             ambitClientFactory.destroy();
         }
-        return bodyResponse;
+        return result;
     }
+
 }

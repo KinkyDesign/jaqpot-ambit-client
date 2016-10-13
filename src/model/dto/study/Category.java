@@ -27,31 +27,42 @@
  *   with the aforementioned licence.
  *
  */
-package model.dto.bundle;
-
-import java.util.Map;
+package model.dto.study;
 
 /**
  *
- * @author Charalampos Chomenidis
  * @author Pantelis Sopasakis
+ * @author Charalampos Chomenidis
+ *
  */
-public class BundleProperties {
+public class Category {
 
-    private Map<String, Object> feature;
+    private String code;
+    private String title;
+    private String term;
 
-    public Map<String, Object> getFeature() {
-        return feature;
+    public String getCode() {
+        return this.code;
     }
 
-    public void setFeature(Map<String, Object> feature) {
-        this.feature = feature;
+    public void setCode(String code) {
+        this.code = code;
     }
 
-    @Override
-    public String toString() {
-        return "BundleProperties{" +
-                "feature=" + feature +
-                '}';
+    public String getTitle() {
+        return title;
     }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getTerm() {
+        return term;
+    }
+
+    public void setTerm(String term) {
+        this.term = term;
+    }
+
 }

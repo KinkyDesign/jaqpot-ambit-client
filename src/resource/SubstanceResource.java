@@ -32,19 +32,18 @@ package resource;
 
 import client.AmbitClientFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import model.dto.ambit.AmbitTask;
-import model.dto.ambit.AmbitTaskArray;
+import model.dto.study.Studies;
 import org.asynchttpclient.*;
 
 import java.io.ByteArrayOutputStream;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-public class AlgorithmResource {
+public class SubstanceResource {
 
-    private final String PATH = "https://apps.ideaconsult.net/enmtest/algorithm";
+    private final String PATH = "https://apps.ideaconsult.net/enmtest/substance";
 
-    public AlgorithmResource(){
+    public SubstanceResource(){
         mapper = new ObjectMapper();
         ambitClientFactory = new AmbitClientFactory();
     }
@@ -53,18 +52,14 @@ public class AlgorithmResource {
 
     AmbitClientFactory ambitClientFactory;
 
-    public AmbitTask mopacOriginalStructure(String datasetURI, String options) {
-
-        String algorithmName="ambit2.mopac.MopacOriginalStructure";
-        AmbitTask bodyResponse=null;
+    public Studies getStudiesBySubstanceId(String substanceId) {
+        Studies result = null;
         AsyncHttpClient c = ambitClientFactory.getClient();
 
-        Future<AmbitTaskArray> f = c
-                .preparePost(PATH+"/"+algorithmName)
-                .addFormParam("dataset_uri",datasetURI)
-                .addFormParam("mopac_commands", options)
-                .addHeader("Accept","application/json")
-                .execute(new AsyncHandler<AmbitTaskArray>() {
+        Future<Studies> f = c
+                .prepareGet(PATH + "/" + substanceId + "/study")
+                .addHeader("Accept", "application/json")
+                .execute(new AsyncHandler<Studies>() {
 
                     private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
                     io.netty.handler.codec.http.HttpHeaders headers;
@@ -82,19 +77,19 @@ public class AlgorithmResource {
 
                     @Override
                     public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
-                        headers =  h.getHeaders();
+                        headers = h.getHeaders();
                         // The headers have been read
                         // If you don't want to read the body, or stop processing the response
                         return State.CONTINUE;
                     }
 
                     @Override
-                    public AmbitTaskArray onCompleted() throws Exception {
+                    public Studies onCompleted() throws Exception {
                         // Will be invoked once the response has been fully read or a ResponseComplete exception
                         // has been thrown.
                         // NOTE: should probably use Content-Encoding from headers
                         bytes.flush();
-                        return mapper.readValue(bytes.toByteArray(), AmbitTaskArray.class);
+                        return mapper.readValue(bytes.toByteArray(), Studies.class);
                     }
 
                     @Override
@@ -109,12 +104,13 @@ public class AlgorithmResource {
                     }
                 });
         try {
-            bodyResponse=f.get().getTask().get(0);
+            result = f.get();
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         } finally {
             ambitClientFactory.destroy();
         }
-        return bodyResponse;
+        return result;
     }
+
 }

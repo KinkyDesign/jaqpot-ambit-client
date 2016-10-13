@@ -60,4 +60,10 @@ public class BundleSubstances {
         this.substance = substance;
     }
 
+    @Override
+    public String toString() {
+        return "BundleSubstances{" +
+                "substance=" + substance +
+                '}';
+    }
 }

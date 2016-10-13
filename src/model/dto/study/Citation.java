@@ -27,31 +27,50 @@
  *   with the aforementioned licence.
  *
  */
-package model.dto.bundle;
 
-import java.util.Map;
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package model.dto.study;
 
 /**
  *
- * @author Charalampos Chomenidis
  * @author Pantelis Sopasakis
+ * @author Charalampos Chomenidis
+ *
  */
-public class BundleProperties {
+public class Citation {
 
-    private Map<String, Object> feature;
+    private String title;
+    private String year;
+    private String owner;
 
-    public Map<String, Object> getFeature() {
-        return feature;
+    public String getTitle() {
+        return title;
     }
 
-    public void setFeature(Map<String, Object> feature) {
-        this.feature = feature;
+    public void setTitle(String title) {
+        this.title = title;
     }
 
-    @Override
-    public String toString() {
-        return "BundleProperties{" +
-                "feature=" + feature +
-                '}';
+    public String getYear() {
+        return year;
     }
+
+    public void setYear(String year) {
+        this.year = year;
+    }
+
+    public String getOwner() {
+        return owner;
+    }
+
+    public void setOwner(String owner) {
+        this.owner = owner;
+    }
+    
+    
+
 }

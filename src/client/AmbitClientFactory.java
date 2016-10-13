@@ -40,10 +40,13 @@ import org.asynchttpclient.DefaultAsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClientConfig;
 
 import javax.annotation.PreDestroy;
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+@ApplicationScoped
 public class AmbitClientFactory {
 
     private static final Logger LOG = Logger.getLogger(AmbitClientFactory.class.getName());
@@ -78,6 +81,7 @@ public class AmbitClientFactory {
         }
     }
 
+    @Inject
     public AsyncHttpClient getClient() {
         return ClientFactory.INSTANCE.getClient();
     }

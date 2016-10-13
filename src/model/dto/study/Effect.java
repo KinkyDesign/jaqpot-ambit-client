@@ -27,31 +27,43 @@
  *   with the aforementioned licence.
  *
  */
-package model.dto.bundle;
+package model.dto.study;
 
-import java.util.Map;
+import java.util.TreeMap;
 
 /**
  *
- * @author Charalampos Chomenidis
  * @author Pantelis Sopasakis
+ * @author Charalampos Chomenidis
+ *
  */
-public class BundleProperties {
+public class Effect {
 
-    private Map<String, Object> feature;
+    private TreeMap<String, Object> conditions;
+    private String endpoint;
+    private Result result;
 
-    public Map<String, Object> getFeature() {
-        return feature;
+    public TreeMap<String, Object> getConditions() {
+        return conditions;
     }
 
-    public void setFeature(Map<String, Object> feature) {
-        this.feature = feature;
+    public void setConditions(TreeMap<String, Object> conditions) {
+        this.conditions = conditions;
     }
 
-    @Override
-    public String toString() {
-        return "BundleProperties{" +
-                "feature=" + feature +
-                '}';
+    public String getEndpoint() {
+        return this.endpoint;
+    }
+
+    public void setEndpoint(String endpoint) {
+        this.endpoint = endpoint;
+    }
+
+    public Result getResult() {
+        return this.result;
+    }
+
+    public void setResult(Result result) {
+        this.result = result;
     }
 }

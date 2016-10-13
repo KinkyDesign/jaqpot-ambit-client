@@ -27,31 +27,15 @@
  *   with the aforementioned licence.
  *
  */
-package model.dto.bundle;
+package model.dto.study;
 
-import java.util.Map;
+import java.util.HashMap;
 
 /**
  *
  * @author Charalampos Chomenidis
  * @author Pantelis Sopasakis
  */
-public class BundleProperties {
+public class Proteomics extends HashMap<String, Result> {
 
-    private Map<String, Object> feature;
-
-    public Map<String, Object> getFeature() {
-        return feature;
-    }
-
-    public void setFeature(Map<String, Object> feature) {
-        this.feature = feature;
-    }
-
-    @Override
-    public String toString() {
-        return "BundleProperties{" +
-                "feature=" + feature +
-                '}';
-    }
 }

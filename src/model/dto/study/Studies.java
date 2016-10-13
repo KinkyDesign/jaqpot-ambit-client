@@ -27,19 +27,25 @@
  *   with the aforementioned licence.
  *
  */
+package model.dto.study;
 
-package resource;
-
-import model.Feature;
+import java.util.List;
 
 /**
- * Create featureAPI getters
+ *
+ * @author Pantelis Sopasakis
+ * @author Charalampos Chomenidis
+ *
  */
-public class FeatureResource {
+public class Studies {
 
-    public Feature getFeature(String featureId)
-    {
+    private List<Study> study;
 
-        return null;
+    public List<Study> getStudy() {
+        return study;
+    }
+
+    public void setStudy(List<Study> study) {
+        this.study = study;
     }
 }

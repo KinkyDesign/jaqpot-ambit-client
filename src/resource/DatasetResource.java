@@ -39,7 +39,6 @@ import org.asynchttpclient.*;
 import org.asynchttpclient.request.body.multipart.ByteArrayPart;
 
 import javax.inject.Inject;
-import javax.ws.rs.client.Client;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.Charset;
 import java.util.UUID;
@@ -52,23 +51,20 @@ public class DatasetResource {
 
     public DatasetResource(){
         mapper = new ObjectMapper();
+        ambitClientFactory = new AmbitClientFactory();
     }
 
     private ObjectMapper mapper;
 
-    @Inject
-    Client client;
 
-    @Inject
     AmbitClientFactory ambitClientFactory;
 
-    public Dataset getDatasetByURI(String datasetURI) {
+    public Dataset getDatasetById(String datasetId) {
         Dataset result=null;
-        ambitClientFactory = new AmbitClientFactory();
         AsyncHttpClient c = ambitClientFactory.getClient();
 
         Future<Dataset> f = c
-                .prepareGet(PATH+"/"+datasetURI)
+                .prepareGet(PATH+"/"+datasetId)
                 .addHeader("Accept","application/json")
                 .execute(new AsyncHandler<Dataset>() {
 
@@ -128,7 +124,6 @@ public class DatasetResource {
     public AmbitTask createDatasetByPDB(byte[] file) {
 
         AmbitTask bodyResponse=null;
-        ambitClientFactory = new AmbitClientFactory();
         AsyncHttpClient c = ambitClientFactory.getClient();
 
         String fileName = UUID.randomUUID().toString() + ".pdb";

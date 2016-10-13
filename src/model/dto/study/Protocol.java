@@ -27,31 +27,53 @@
  *   with the aforementioned licence.
  *
  */
-package model.dto.bundle;
 
-import java.util.Map;
+package model.dto.study;
+
+import java.util.List;
 
 /**
  *
- * @author Charalampos Chomenidis
  * @author Pantelis Sopasakis
+ * @author Charalampos Chomenidis
+ *
  */
-public class BundleProperties {
+public class Protocol {
 
-    private Map<String, Object> feature;
+    private Category category;
+    private String endpoint;
+    private List<String> guideline;
+    private String topcategory;
 
-    public Map<String, Object> getFeature() {
-        return feature;
+    public Category getCategory() {
+        return this.category;
     }
 
-    public void setFeature(Map<String, Object> feature) {
-        this.feature = feature;
+    public void setCategory(Category category) {
+        this.category = category;
     }
 
-    @Override
-    public String toString() {
-        return "BundleProperties{" +
-                "feature=" + feature +
-                '}';
+    public String getEndpoint() {
+        return this.endpoint;
+    }
+
+    public void setEndpoint(String endpoint) {
+        this.endpoint = endpoint;
+    }
+
+    public List<String> getGuideline() {
+        return this.guideline;
+    }
+
+    public void setGuideline(List<String> guideline) {
+        this.guideline = guideline;
+    }
+
+    public String getTopcategory() {
+        return this.topcategory;
+    }
+
+    public void setTopcategory(String topcategory) {
+        this.topcategory = topcategory;
     }
 }

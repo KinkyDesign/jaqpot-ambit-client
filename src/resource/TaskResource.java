@@ -45,6 +45,7 @@ import javax.ws.rs.client.Client;
 import java.io.ByteArrayOutputStream;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import javax.inject.Inject;
 
 public class TaskResource {
 
@@ -52,20 +53,16 @@ public class TaskResource {
 
     public TaskResource(){
         mapper = new ObjectMapper();
+        ambitClientFactory = new AmbitClientFactory();
     }
 
     private ObjectMapper mapper;
 
-    @Inject
-    Client client;
-
-    @Inject
     AmbitClientFactory ambitClientFactory;
 
     public AmbitTask getTask(String taskUri) {
 
         AmbitTask bodyResponse=null;
-        ambitClientFactory = new AmbitClientFactory();
         AsyncHttpClient c = ambitClientFactory.getClient();
 
         Future<AmbitTaskArray> f = c
