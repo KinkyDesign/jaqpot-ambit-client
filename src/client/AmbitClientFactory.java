@@ -41,7 +41,6 @@ import org.asynchttpclient.DefaultAsyncHttpClientConfig;
 
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;

@@ -180,4 +180,69 @@ public class DatasetResource {
         }
         return bodyResponse;
     }
+
+
+    public Dataset getStructuresByDatasetId(String datasetId) {
+
+        Dataset bodyResponse=null;
+        AsyncHttpClient c = ambitClientFactory.getClient();
+
+        String fileName = UUID.randomUUID().toString() + ".pdb";
+
+        Future<Dataset> f = c
+                .prepareGet(PATH+"/"+datasetId+"/structures")
+                .addHeader("Accept","application/json")
+
+                .execute(new AsyncHandler<Dataset>() {
+
+                    private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                    io.netty.handler.codec.http.HttpHeaders headers;
+
+                    @Override
+                    public State onStatusReceived(HttpResponseStatus status) throws Exception {
+                        int statusCode = status.getStatusCode();
+                        // The Status have been read
+                        // If you don't want to read the headers,body or stop processing the response
+                        if (statusCode >= 500) {
+                            return AsyncHandler.State.ABORT;
+                        }
+                        return State.CONTINUE;
+                    }
+
+                    @Override
+                    public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
+                        headers =  h.getHeaders();
+                        // The headers have been read
+                        // If you don't want to read the body, or stop processing the response
+                        return State.CONTINUE;
+                    }
+
+                    @Override
+                    public Dataset onCompleted() throws Exception {
+                        // Will be invoked once the response has been fully read or a ResponseComplete exception
+                        // has been thrown.
+                        // NOTE: should probably use Content-Encoding from headers
+                        bytes.flush();
+                        return mapper.readValue(bytes.toByteArray(), Dataset.class);
+                    }
+
+                    @Override
+                    public void onThrowable(Throwable t) {
+                    }
+
+                    @Override
+                    public State onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
+                        bytes.write(httpResponseBodyPart.getBodyPartBytes());
+                        bytes.flush();
+                        return State.CONTINUE;
+                    }
+                });
+        try {
+            bodyResponse=f.get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
+        return bodyResponse;
+    }
+
 }

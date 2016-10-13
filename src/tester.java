@@ -90,12 +90,16 @@ class tester {
         BundleSubstances bundleSubstances = bundleResource.getSubstances("1");
 
 
-        for (Substance substance : bundleSubstances.getSubstance()) {
+        /*for (Substance substance : bundleSubstances.getSubstance()) {
 
 
             Studies studies = substanceResource.getStudiesBySubstanceId(substance.getURI().split("substance/")[1]);
             //System.out.println(studies.getStudy().toString());
 
-        }
+        }*/
+
+        Dataset datset = datasetResource.getStructuresByDatasetId("1");
+        System.out.println(datset.toString());
+
     }
 }
