@@ -38,7 +38,6 @@ import model.dto.ambit.AmbitTaskArray;
 import org.asynchttpclient.*;
 import org.asynchttpclient.request.body.multipart.ByteArrayPart;
 
-import javax.inject.Inject;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.Charset;
 import java.util.UUID;
@@ -114,8 +113,6 @@ public class DatasetResource {
             result=f.get();
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
-        } finally {
-            ambitClientFactory.destroy();
         }
         return result;
     }
@@ -180,8 +177,6 @@ public class DatasetResource {
             bodyResponse=f.get().getTask().get(0);
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
-        } finally {
-            ambitClientFactory.destroy();
         }
         return bodyResponse;
     }

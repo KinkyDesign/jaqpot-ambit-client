@@ -40,12 +40,9 @@ import model.dto.ambit.AmbitTask;
 import model.dto.ambit.AmbitTaskArray;
 import org.asynchttpclient.*;
 
-import javax.inject.Inject;
-import javax.ws.rs.client.Client;
 import java.io.ByteArrayOutputStream;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import javax.inject.Inject;
 
 public class TaskResource {
 
@@ -116,8 +113,6 @@ public class TaskResource {
             bodyResponse=f.get().getTask().get(0);
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
-        } finally {
-            ambitClientFactory.destroy();
         }
         return bodyResponse;
     }

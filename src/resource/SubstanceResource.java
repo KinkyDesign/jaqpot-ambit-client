@@ -107,8 +107,6 @@ public class SubstanceResource {
             result = f.get();
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
-        } finally {
-            ambitClientFactory.destroy();
         }
         return result;
     }

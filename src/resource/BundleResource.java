@@ -36,7 +36,6 @@ import model.dto.bundle.BundleProperties;
 import model.dto.bundle.BundleSubstances;
 import org.asynchttpclient.*;
 
-import javax.inject.Inject;
 import java.io.ByteArrayOutputStream;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -113,8 +112,6 @@ public class BundleResource {
             result=f.get();
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
-        } finally {
-            ambitClientFactory.destroy();
         }
         return result;
     }
@@ -179,8 +176,6 @@ public class BundleResource {
             result=f.get();
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
-        } finally {
-            ambitClientFactory.destroy();
         }
         return result;
     }

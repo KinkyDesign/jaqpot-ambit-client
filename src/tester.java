@@ -89,9 +89,12 @@ class tester {
         BundleProperties  bundleProperties = bundleResource.getProperties("1");
         BundleSubstances bundleSubstances = bundleResource.getSubstances("1");
 
+
         for (Substance substance : bundleSubstances.getSubstance()) {
+
+
             Studies studies = substanceResource.getStudiesBySubstanceId(substance.getURI().split("substance/")[1]);
-            System.out.println(studies.getStudy().toString());
+            //System.out.println(studies.getStudy().toString());
 
         }
     }

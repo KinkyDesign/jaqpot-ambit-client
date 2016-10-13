@@ -112,8 +112,6 @@ public class AlgorithmResource {
             bodyResponse=f.get().getTask().get(0);
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
-        } finally {
-            ambitClientFactory.destroy();
         }
         return bodyResponse;
     }

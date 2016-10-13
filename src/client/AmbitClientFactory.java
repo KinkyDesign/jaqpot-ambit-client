@@ -55,18 +55,23 @@ public class AmbitClientFactory {
     public AmbitClientFactory(){}
 
     private enum ClientFactory {
+
         INSTANCE;
 
-        public AsyncHttpClient getClient() {
-            AsyncHttpClientConfig config = new DefaultAsyncHttpClientConfig.Builder()
-                    .setAcceptAnyCertificate(true)
-                    .setMaxRequestRetry(0)
-                    .setReadTimeout(30000)
-                    .setRequestTimeout(30000)
-                    .setFollowRedirect(false)
+        private DefaultAsyncHttpClient s;
 
-                    .build();
-            return new DefaultAsyncHttpClient(config);
+        ClientFactory() {
+            AsyncHttpClientConfig config = new DefaultAsyncHttpClientConfig.Builder()
+                    .setPooledConnectionIdleTimeout(500)
+                    .setMaxConnections(20000)
+                    .setAcceptAnyCertificate(true)
+                    .setMaxConnectionsPerHost(5000).build();
+
+            s = new DefaultAsyncHttpClient(config);
+
+        }
+        public AsyncHttpClient getClient() {
+            return s;
         }
     }
 
@@ -81,7 +86,6 @@ public class AmbitClientFactory {
         }
     }
 
-    @Inject
     public AsyncHttpClient getClient() {
         return ClientFactory.INSTANCE.getClient();
     }
