@@ -30,28 +30,31 @@
 
 package resource;
 
+/**
+ * Created by Angelos Valsamis on 13/10/2016.
+ */
+
 import client.AmbitClientFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import model.dto.ambit.AmbitTask;
 import model.dto.ambit.AmbitTaskArray;
 import org.asynchttpclient.*;
-import org.asynchttpclient.request.body.multipart.ByteArrayPart;
 
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import java.io.ByteArrayOutputStream;
-import java.nio.charset.Charset;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-public class BundleResource {
+public class TaskResource {
 
-    private final String path = "https://apps.ideaconsult.net/enmtest/dataset";
+    private final String PATH = "https://apps.ideaconsult.net/enmtest/task";
 
-    public BundleResource(){}
+    public TaskResource(){
+        mapper = new ObjectMapper();
+    }
 
-    ObjectMapper mapper = new ObjectMapper();
+    private ObjectMapper mapper;
 
     @Inject
     Client client;
@@ -59,77 +62,67 @@ public class BundleResource {
     @Inject
     AmbitClientFactory ambitClientFactory;
 
-    public AmbitTask getBundle(byte[] file) {
+    public AmbitTask getTask(String taskUri) {
 
         AmbitTask bodyResponse=null;
         ambitClientFactory = new AmbitClientFactory();
         AsyncHttpClient c = ambitClientFactory.getClient();
 
-        String fileName = UUID.randomUUID().toString() + ".pdb";
-
-
         Future<AmbitTaskArray> f = c
-                .preparePost(path)
-                .addBodyPart(new ByteArrayPart("file",file,"octet-stream",Charset.defaultCharset(),fileName))
+                .prepareGet(PATH+"/"+taskUri)
                 .addHeader("Accept","application/json")
                 .execute(new AsyncHandler<AmbitTaskArray>() {
 
                     private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
                     io.netty.handler.codec.http.HttpHeaders headers;
 
-            @Override
-            public State onStatusReceived(HttpResponseStatus status) throws Exception {
-                int statusCode = status.getStatusCode();
-                // The Status have been read
-                // If you don't want to read the headers,body or stop processing the response
-                if (statusCode >= 500) {
-                    return AsyncHandler.State.ABORT;
-                }
-                return State.CONTINUE;
-            }
+                    @Override
+                    public State onStatusReceived(HttpResponseStatus status) throws Exception {
+                        int statusCode = status.getStatusCode();
+                        // The Status have been read
+                        // If you don't want to read the headers,body or stop processing the response
+                        if (statusCode >= 500) {
+                            return AsyncHandler.State.ABORT;
+                        }
+                        return State.CONTINUE;
+                    }
 
-            @Override
-            public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
-                headers =  h.getHeaders();
-                // The headers have been read
-                // If you don't want to read the body, or stop processing the response
-                return State.CONTINUE;
-            }
+                    @Override
+                    public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
+                        headers =  h.getHeaders();
+                        // The headers have been read
+                        // If you don't want to read the body, or stop processing the response
+                        return State.CONTINUE;
+                    }
 
+                    @Override
+                    public AmbitTaskArray onCompleted() throws Exception {
+                        // Will be invoked once the response has been fully read or a ResponseComplete exception
+                        // has been thrown.
+                        // NOTE: should probably use Content-Encoding from headers
+                        bytes.flush();
+                        return mapper.readValue(bytes.toByteArray(), AmbitTaskArray.class);
+                    }
 
+                    @Override
+                    public void onThrowable(Throwable t) {
+                    }
 
-            @Override
-            public AmbitTaskArray onCompleted() throws Exception {
-                // Will be invoked once the response has been fully read or a ResponseComplete exception
-                // has been thrown.
-                // NOTE: should probably use Content-Encoding from headers
-                bytes.flush();
-
-
-                AmbitTaskArray ambitTaskArray =  mapper.readValue(bytes.toByteArray(), AmbitTaskArray.class);
-
-               return ambitTaskArray;
-            }
-
-            @Override
-            public void onThrowable(Throwable t) {
-            }
-
-            @Override
-            public State onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
-                bytes.write(httpResponseBodyPart.getBodyPartBytes());
-                bytes.flush();
-                return State.CONTINUE;
-            }
-            });
-
+                    @Override
+                    public State onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
+                        bytes.write(httpResponseBodyPart.getBodyPartBytes());
+                        bytes.flush();
+                        return State.CONTINUE;
+                    }
+                });
         try {
             bodyResponse=f.get().getTask().get(0);
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
-        }finally {
+        } finally {
             ambitClientFactory.destroy();
         }
         return bodyResponse;
     }
 }
+

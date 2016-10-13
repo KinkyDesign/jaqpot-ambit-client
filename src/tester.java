@@ -28,9 +28,12 @@
  *
  */
 
+import model.dataset.Dataset;
 import model.dto.ambit.AmbitTask;
 import org.apache.commons.io.IOUtils;
-import resource.BundleResource;
+import resource.AlgorithmResource;
+import resource.DatasetResource;
+import resource.TaskResource;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -49,7 +52,9 @@ class tester {
 
         org.apache.log4j.BasicConfigurator.configure();
 
-        BundleResource bundle = new BundleResource();
+        DatasetResource datasetResource = new DatasetResource();
+        TaskResource taskResource = new TaskResource();
+        AlgorithmResource algorithmResource = new AlgorithmResource();
 
         URL pdbURL = null;
         try {
@@ -62,10 +67,24 @@ class tester {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        AmbitTask result = bundle.getBundle(file);
+
+        AmbitTask result = datasetResource.createDatasetByPDB(file);
+
+        while (result.getStatus().equals("Running") || result.getStatus().equals("Queued")) {
+            result=taskResource.getTask(result.getId());
+        }
+
+        result = algorithmResource.mopacOriginalStructure(result.getResult(),"PM3 NOINTER MMOK BONDS MULLIK GNORM=1.0 T=30.00M");
+
+        while (result.getStatus().equals("Running") || result.getStatus().equals("Queued")) {
+            result=taskResource.getTask(result.getId());
+        }
+
+        Dataset dataset = datasetResource.getDatasetByURI(result.getResult().split("dataset/")[1]);
 
         System.out.println(result.toString());
 
+        System.out.println(dataset.toString());
 
     }
 }
