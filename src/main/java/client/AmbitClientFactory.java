@@ -40,16 +40,13 @@ import org.asynchttpclient.DefaultAsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClientConfig;
 
 import javax.annotation.PreDestroy;
-import javax.enterprise.context.ApplicationScoped;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@ApplicationScoped
 public class AmbitClientFactory {
 
     private static final Logger LOG = Logger.getLogger(AmbitClientFactory.class.getName());
-
 
     public AmbitClientFactory(){}
 
@@ -74,12 +71,10 @@ public class AmbitClientFactory {
         }
     }
 
-
     @PreDestroy
     public void destroy() {
         try {
             getClient().close();
-
         } catch (IOException ex) {
             LOG.log(Level.SEVERE, "Could not successfully close AmbitClient", ex);
         }

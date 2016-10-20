@@ -56,7 +56,7 @@ public class DatasetResource {
     private ObjectMapper mapper;
 
 
-    AmbitClientFactory ambitClientFactory;
+    private AmbitClientFactory ambitClientFactory;
 
     public Dataset getDatasetById(String datasetId) {
         Dataset result=null;
@@ -186,8 +186,6 @@ public class DatasetResource {
 
         Dataset bodyResponse=null;
         AsyncHttpClient c = ambitClientFactory.getClient();
-
-        String fileName = UUID.randomUUID().toString() + ".pdb";
 
         Future<Dataset> f = c
                 .prepareGet(PATH+"/"+datasetId+"/structures")

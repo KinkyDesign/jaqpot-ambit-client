@@ -30,6 +30,10 @@
 
 package resource;
 
+/**
+ * Created by Angelos Valsamis on 13/10/2016.
+ */
+
 import client.AmbitClientFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import model.dto.ambit.AmbitTask;
@@ -40,29 +44,26 @@ import java.io.ByteArrayOutputStream;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-public class AlgorithmResource {
+public class TaskResource {
 
-    private final String PATH = "https://apps.ideaconsult.net/enmtest/algorithm";
+    private final String PATH = "https://apps.ideaconsult.net/enmtest/task";
 
-    public AlgorithmResource(){
+    public TaskResource(){
         mapper = new ObjectMapper();
         ambitClientFactory = new AmbitClientFactory();
     }
 
     private ObjectMapper mapper;
 
-    AmbitClientFactory ambitClientFactory;
+    private AmbitClientFactory ambitClientFactory;
 
-    public AmbitTask mopacOriginalStructure(String datasetURI, String options) {
+    public AmbitTask getTask(String taskUri) {
 
-        String algorithmName="ambit2.mopac.MopacOriginalStructure";
         AmbitTask bodyResponse=null;
         AsyncHttpClient c = ambitClientFactory.getClient();
 
         Future<AmbitTaskArray> f = c
-                .preparePost(PATH+"/"+algorithmName)
-                .addFormParam("dataset_uri",datasetURI)
-                .addFormParam("mopac_commands", options)
+                .prepareGet(PATH+"/"+taskUri)
                 .addHeader("Accept","application/json")
                 .execute(new AsyncHandler<AmbitTaskArray>() {
 
@@ -116,3 +117,4 @@ public class AlgorithmResource {
         return bodyResponse;
     }
 }
+

@@ -50,7 +50,7 @@ public class SubstanceResource {
 
     private ObjectMapper mapper;
 
-    AmbitClientFactory ambitClientFactory;
+    private AmbitClientFactory ambitClientFactory;
 
     public Studies getStudiesBySubstanceId(String substanceId) {
         Studies result = null;

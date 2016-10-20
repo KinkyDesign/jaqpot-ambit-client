@@ -28,6 +28,7 @@
  *
  */
 
+import com.github.jsonldjava.utils.JsonUtils;
 import model.dataset.Dataset;
 import model.dataset.Substance;
 import model.dto.ambit.AmbitTask;
@@ -51,7 +52,6 @@ class tester {
         System.out.println("Hello word");
         byte[] file = new byte[0];
 
-
         org.apache.log4j.BasicConfigurator.configure();
 
         DatasetResource datasetResource = new DatasetResource();
@@ -59,7 +59,7 @@ class tester {
         AlgorithmResource algorithmResource = new AlgorithmResource();
         BundleResource bundleResource = new BundleResource();
         SubstanceResource substanceResource = new SubstanceResource();
-
+/*
         URL pdbURL = null;
         try {
             pdbURL = new URL("http://enanomapper.ntua.gr/pdbRepo/17002-ICSDNiO.pdb");
@@ -75,31 +75,36 @@ class tester {
         AmbitTask result = datasetResource.createDatasetByPDB(file);
 
         while (result.getStatus().equals("Running") || result.getStatus().equals("Queued")) {
-            result=taskResource.getTask(result.getId());
+            result = taskResource.getTask(result.getId());
         }
 
-        result = algorithmResource.mopacOriginalStructure(result.getResult(),"PM3 NOINTER MMOK BONDS MULLIK GNORM=1.0 T=30.00M");
+        result = algorithmResource.mopacOriginalStructure(result.getResult(), "PM3 NOINTER MMOK BONDS MULLIK GNORM=1.0 T=30.00M");
 
         while (result.getStatus().equals("Running") || result.getStatus().equals("Queued")) {
-            result=taskResource.getTask(result.getId());
+            result = taskResource.getTask(result.getId());
         }
 
         Dataset dataset = datasetResource.getDatasetById(result.getResult().split("dataset/")[1]);
 
-        BundleProperties  bundleProperties = bundleResource.getProperties("1");
+        BundleProperties bundleProperties = bundleResource.getProperties("1");
         BundleSubstances bundleSubstances = bundleResource.getSubstances("1");
 
-
-        /*for (Substance substance : bundleSubstances.getSubstance()) {
-
-
+        for (Substance substance : bundleSubstances.getSubstance()) {
             Studies studies = substanceResource.getStudiesBySubstanceId(substance.getURI().split("substance/")[1]);
-            //System.out.println(studies.getStudy().toString());
-
-        }*/
+            System.out.println(studies.getStudy().toString());
+        }
 
         Dataset datset = datasetResource.getStructuresByDatasetId("1");
         System.out.println(datset.toString());
 
+        //   BundleSubstances bundleSubstances = bundleResource.getSubstances("1");
+*/
+        Object jsonLd = bundleResource.getBundleByJsonLD("1");
+        try {
+            System.out.println(JsonUtils.toPrettyString(jsonLd));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
-}
+    }
+
