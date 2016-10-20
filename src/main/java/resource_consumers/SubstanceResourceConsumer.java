@@ -28,7 +28,7 @@
  *
  */
 
-package resource;
+package resource_consumers;
 
 import client.AmbitClientFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,18 +39,19 @@ import java.io.ByteArrayOutputStream;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-public class SubstanceResource {
+public class SubstanceResourceConsumer {
 
     private final String PATH = "https://apps.ideaconsult.net/enmtest/substance";
 
-    public SubstanceResource(){
-        mapper = new ObjectMapper();
-        ambitClientFactory = new AmbitClientFactory();
+    private final ObjectMapper mapper;
+
+    private final AmbitClientFactory ambitClientFactory;
+
+
+    public SubstanceResourceConsumer(ObjectMapper mapper, AmbitClientFactory ambitClientFactory){
+        this.mapper = mapper;
+        this.ambitClientFactory = ambitClientFactory;
     }
-
-    private ObjectMapper mapper;
-
-    private AmbitClientFactory ambitClientFactory;
 
     public Studies getStudiesBySubstanceId(String substanceId) {
         Studies result = null;

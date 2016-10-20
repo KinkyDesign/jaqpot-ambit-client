@@ -28,7 +28,7 @@
  *
  */
 
-package resource;
+package resource_consumers;
 
 /**
  * Created by Angelos Valsamis on 13/10/2016.
@@ -44,18 +44,19 @@ import java.io.ByteArrayOutputStream;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-public class TaskResource {
+public class TaskResourceConsumer {
 
     private final String PATH = "https://apps.ideaconsult.net/enmtest/task";
 
-    public TaskResource(){
-        mapper = new ObjectMapper();
-        ambitClientFactory = new AmbitClientFactory();
+    private final ObjectMapper mapper;
+
+    private final AmbitClientFactory ambitClientFactory;
+
+
+    public TaskResourceConsumer(ObjectMapper mapper, AmbitClientFactory ambitClientFactory){
+        this.mapper = mapper;
+        this.ambitClientFactory = ambitClientFactory;
     }
-
-    private ObjectMapper mapper;
-
-    private AmbitClientFactory ambitClientFactory;
 
     public AmbitTask getTask(String taskUri) {
 
@@ -117,4 +118,3 @@ public class TaskResource {
         return bodyResponse;
     }
 }
-

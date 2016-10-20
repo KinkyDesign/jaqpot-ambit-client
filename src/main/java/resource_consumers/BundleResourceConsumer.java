@@ -28,44 +28,51 @@
  *
  */
 
-package resource;
+package resource_consumers;
 
 import client.AmbitClientFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import model.dataset.Dataset;
-import model.dto.ambit.AmbitTask;
-import model.dto.ambit.AmbitTaskArray;
+import com.github.jsonldjava.core.JsonLdOptions;
+import com.github.jsonldjava.core.JsonLdProcessor;
+import com.github.jsonldjava.utils.JsonUtils;
+import model.dto.bundle.BundleProperties;
+import model.dto.bundle.BundleSubstances;
 import org.asynchttpclient.*;
-import org.asynchttpclient.request.body.multipart.ByteArrayPart;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.nio.charset.Charset;
-import java.util.UUID;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-public class DatasetResource {
+/**
+ * Created by Angelos Valsamis on 13/10/2016.
+ */
+public class BundleResourceConsumer {
 
-    private final String PATH = "https://apps.ideaconsult.net/enmtest/dataset";
+    String PATH = "https://apps.ideaconsult.net/enmtest/bundle";
 
-    public DatasetResource(){
-        mapper = new ObjectMapper();
-        ambitClientFactory = new AmbitClientFactory();
+    private final ObjectMapper mapper;
+
+    private final AmbitClientFactory ambitClientFactory;
+
+
+    public BundleResourceConsumer(ObjectMapper mapper, AmbitClientFactory ambitClientFactory){
+        this.mapper = mapper;
+        this.ambitClientFactory = ambitClientFactory;
     }
 
-    private ObjectMapper mapper;
+    public BundleSubstances getSubstancesByBundleId (String bundleId) {
 
-
-    private AmbitClientFactory ambitClientFactory;
-
-    public Dataset getDatasetById(String datasetId) {
-        Dataset result=null;
+        BundleSubstances result = null;
         AsyncHttpClient c = ambitClientFactory.getClient();
 
-        Future<Dataset> f = c
-                .prepareGet(PATH+"/"+datasetId)
+        Future<BundleSubstances> f = c
+                .prepareGet(PATH+"/"+bundleId+"/substance")
                 .addHeader("Accept","application/json")
-                .execute(new AsyncHandler<Dataset>() {
+                .execute(new AsyncHandler<BundleSubstances>() {
 
                     private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
                     io.netty.handler.codec.http.HttpHeaders headers;
@@ -90,12 +97,178 @@ public class DatasetResource {
                     }
 
                     @Override
-                    public Dataset onCompleted() throws Exception {
+                    public BundleSubstances onCompleted() throws Exception {
                         // Will be invoked once the response has been fully read or a ResponseComplete exception
                         // has been thrown.
                         // NOTE: should probably use Content-Encoding from headers
                         bytes.flush();
-                        return mapper.readValue(bytes.toByteArray(), Dataset.class);
+                        return mapper.readValue(bytes.toByteArray(), BundleSubstances.class);
+                    }
+
+                    @Override
+                    public void onThrowable(Throwable t) {
+                    }
+
+                    @Override
+                    public State onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
+                        bytes.write(httpResponseBodyPart.getBodyPartBytes());
+                        bytes.flush();
+                        return State.CONTINUE;
+                    }
+                });
+
+        try {
+            result=f.get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    public Object getBundleByJsonLD (String bundleId) {
+
+
+        BundleSubstances result = null;
+        AsyncHttpClient c = ambitClientFactory.getClient();
+
+        Future<Object> f = c
+                .prepareGet(PATH+"/"+bundleId+"/substance")
+                .addHeader("Accept","application/ld+json")
+                .execute(new AsyncHandler<Object>() {
+
+                    private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                    io.netty.handler.codec.http.HttpHeaders headers;
+
+                    @Override
+                    public State onStatusReceived(HttpResponseStatus status) throws Exception {
+                        int statusCode = status.getStatusCode();
+                        // The Status have been read
+                        // If you don't want to read the headers,body or stop processing the response
+                        if (statusCode >= 500) {
+                            return AsyncHandler.State.ABORT;
+                        }
+                        return State.CONTINUE;
+                    }
+
+                    @Override
+                    public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
+                        headers =  h.getHeaders();
+                        // The headers have been read
+                        // If you don't want to read the body, or stop processing the response
+                        return State.CONTINUE;
+                    }
+
+                    @Override
+                    public Object onCompleted() throws Exception {
+                        // Will be invoked once the response has been fully read or a ResponseComplete exception
+                        // has been thrown.
+                        // NOTE: should probably use Content-Encoding from headers
+                        bytes.flush();
+                        //System.out.println(bytes.toString());
+                        InputStream inputStream = new ByteArrayInputStream(bytes.toByteArray());
+
+                        Object jsonObject = JsonUtils.fromInputStream(inputStream);
+                        Map<String, String> context = new HashMap<String, String>();
+                        context.put("sso","http://semanticscience.org/resource_consumers/");
+                        context.put("otee" , "http://www.opentox.org/echaEndpoints.owl#");
+                        context.put("bx" , "http://purl.org/net/nknouf/ns/bibtex#");
+                        context.put("npo" , "http://purl.bioontology.org/ontology/npo#");
+                        context.put("dcterms" , "http://purl.org/dc/terms/");
+                        context.put("rdfs" , "http://www.w3.org/2000/01/rdf-schema#");
+                        context.put("substance" , "https://apps.ideaconsult.net/data/substance/");
+                        context.put("rdf" , "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
+                        context.put("ot" , "http://www.opentox.org/api/1.1#");
+                        context.put("dc" , "http://purl.org/dc/elements/1.1/");
+                        context.put("enm" , "http://purl.enanomapper.org/onto/");
+                        context.put("foaf" , "http://xmlns.com/foaf/0.1/");
+                        context.put("ota" , "http://www.opentox.org/algorithmTypes.owl#");
+                        context.put("as" , "https://apps.ideaconsult.net/data/assay/");
+                        context.put("void" , "http://rdfs.org/ns/void#");
+                        context.put("mgroup" , "https://apps.ideaconsult.net/data/measuregroup/");
+                        context.put("obo" , "http://purl.obolibrary.org/obo/");
+                        context.put("ap" , "https://apps.ideaconsult.net/data/protocol/");
+                        context.put("am" , "https://apps.ideaconsult.net/data/model/");
+                        context.put("sio" , "http://semanticscience.org/resource_consumers/");
+                        context.put("ac" , "https://apps.ideaconsult.net/data/compound/");
+                        context.put("owl" , "http://www.w3.org/2002/07/owl#");
+                        context.put("ep" , "https://apps.ideaconsult.net/data/endpoint/");
+                        context.put("owner" , "https://apps.ideaconsult.net/data/owner/");
+                        context.put("xsd" , "http://www.w3.org/2001/XMLSchema#");
+                        context.put("ad" , "https://apps.ideaconsult.net/data/dataset/");
+                        context.put("ag" , "https://apps.ideaconsult.net/data/algorithm/");
+                        context.put("af" , "https://apps.ideaconsult.net/data/feature/");
+                        context.put("bao" ,"http://www.bioassayontology.org/bao#");
+                        JsonLdOptions options = new JsonLdOptions();
+                        options.useNamespaces=false;
+                        options.setExplicit(false);
+                        options.setCompactArrays(false);
+                        // Customise options...
+                        // Call whichever JSONLD function you want! (e.g. compact)
+                        Object compact = JsonLdProcessor.compact(jsonObject,context,options);
+                        return compact;
+                    }
+
+                    @Override
+                    public void onThrowable(Throwable t) {
+                    }
+
+                    @Override
+                    public State onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
+                        bytes.write(httpResponseBodyPart.getBodyPartBytes());
+                        bytes.flush();
+                        return State.CONTINUE;
+                    }
+                });
+
+        try {
+            return f.get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    public BundleProperties getPropertiesByBundleId (String bundleId) {
+
+        String PATH = "https://apps.ideaconsult.net/enmtest/bundle";
+
+        AsyncHttpClient c = ambitClientFactory.getClient();
+        BundleProperties result = null;
+        Future<BundleProperties> f = c
+                .prepareGet(PATH+"/"+bundleId+"/property")
+                .addHeader("Accept","application/json")
+                .execute(new AsyncHandler<BundleProperties>() {
+
+                    private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                    io.netty.handler.codec.http.HttpHeaders headers;
+
+                    @Override
+                    public State onStatusReceived(HttpResponseStatus status) throws Exception {
+                        int statusCode = status.getStatusCode();
+                        // The Status have been read
+                        // If you don't want to read the headers,body or stop processing the response
+                        if (statusCode >= 500) {
+                            return State.ABORT;
+                        }
+                        return State.CONTINUE;
+                    }
+
+                    @Override
+                    public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
+                        headers =  h.getHeaders();
+                        // The headers have been read
+                        // If you don't want to read the body, or stop processing the response
+                        return State.CONTINUE;
+                    }
+
+                    @Override
+                    public BundleProperties onCompleted() throws Exception {
+                        // Will be invoked once the response has been fully read or a ResponseComplete exception
+                        // has been thrown.
+                        // NOTE: should probably use Content-Encoding from headers
+                        bytes.flush();
+                        System.out.println(bytes.toString());
+                        return mapper.readValue(bytes.toByteArray(), BundleProperties.class);
                     }
 
                     @Override
@@ -115,132 +288,6 @@ public class DatasetResource {
             e.printStackTrace();
         }
         return result;
-    }
-
-
-    public AmbitTask createDatasetByPDB(byte[] file) {
-
-        AmbitTask bodyResponse=null;
-        AsyncHttpClient c = ambitClientFactory.getClient();
-
-        String fileName = UUID.randomUUID().toString() + ".pdb";
-
-        Future<AmbitTaskArray> f = c
-                .preparePost(PATH)
-                .addBodyPart(new ByteArrayPart("file",file,"octet-stream",Charset.defaultCharset(),fileName))
-                .addHeader("Accept","application/json")
-                .execute(new AsyncHandler<AmbitTaskArray>() {
-
-                    private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                    io.netty.handler.codec.http.HttpHeaders headers;
-
-                    @Override
-                    public State onStatusReceived(HttpResponseStatus status) throws Exception {
-                        int statusCode = status.getStatusCode();
-                        // The Status have been read
-                        // If you don't want to read the headers,body or stop processing the response
-                        if (statusCode >= 500) {
-                            return AsyncHandler.State.ABORT;
-                        }
-                        return State.CONTINUE;
-                    }
-
-                    @Override
-                    public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
-                        headers =  h.getHeaders();
-                        // The headers have been read
-                        // If you don't want to read the body, or stop processing the response
-                        return State.CONTINUE;
-                    }
-
-                    @Override
-                    public AmbitTaskArray onCompleted() throws Exception {
-                        // Will be invoked once the response has been fully read or a ResponseComplete exception
-                        // has been thrown.
-                        // NOTE: should probably use Content-Encoding from headers
-                        bytes.flush();
-                        return mapper.readValue(bytes.toByteArray(), AmbitTaskArray.class);
-                    }
-
-                    @Override
-                    public void onThrowable(Throwable t) {
-                    }
-
-                    @Override
-                    public State onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
-                        bytes.write(httpResponseBodyPart.getBodyPartBytes());
-                        bytes.flush();
-                        return State.CONTINUE;
-                    }
-                });
-        try {
-            bodyResponse=f.get().getTask().get(0);
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-        return bodyResponse;
-    }
-
-
-    public Dataset getStructuresByDatasetId(String datasetId) {
-
-        Dataset bodyResponse=null;
-        AsyncHttpClient c = ambitClientFactory.getClient();
-
-        Future<Dataset> f = c
-                .prepareGet(PATH+"/"+datasetId+"/structures")
-                .addHeader("Accept","application/json")
-
-                .execute(new AsyncHandler<Dataset>() {
-
-                    private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                    io.netty.handler.codec.http.HttpHeaders headers;
-
-                    @Override
-                    public State onStatusReceived(HttpResponseStatus status) throws Exception {
-                        int statusCode = status.getStatusCode();
-                        // The Status have been read
-                        // If you don't want to read the headers,body or stop processing the response
-                        if (statusCode >= 500) {
-                            return AsyncHandler.State.ABORT;
-                        }
-                        return State.CONTINUE;
-                    }
-
-                    @Override
-                    public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
-                        headers =  h.getHeaders();
-                        // The headers have been read
-                        // If you don't want to read the body, or stop processing the response
-                        return State.CONTINUE;
-                    }
-
-                    @Override
-                    public Dataset onCompleted() throws Exception {
-                        // Will be invoked once the response has been fully read or a ResponseComplete exception
-                        // has been thrown.
-                        // NOTE: should probably use Content-Encoding from headers
-                        bytes.flush();
-                        return mapper.readValue(bytes.toByteArray(), Dataset.class);
-                    }
-
-                    @Override
-                    public void onThrowable(Throwable t) {
-                    }
-
-                    @Override
-                    public State onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
-                        bytes.write(httpResponseBodyPart.getBodyPartBytes());
-                        bytes.flush();
-                        return State.CONTINUE;
-                    }
-                });
-        try {
-            bodyResponse=f.get();
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-        return bodyResponse;
     }
 
 }

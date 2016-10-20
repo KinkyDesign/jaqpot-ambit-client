@@ -28,7 +28,7 @@
  *
  */
 
-package resource;
+package resource_consumers;
 
 import client.AmbitClientFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,18 +40,18 @@ import java.io.ByteArrayOutputStream;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-public class AlgorithmResource {
+public class AlgorithmResourceConsumer {
 
     private final String PATH = "https://apps.ideaconsult.net/enmtest/algorithm";
 
-    public AlgorithmResource(){
-        mapper = new ObjectMapper();
-        ambitClientFactory = new AmbitClientFactory();
+    private final ObjectMapper mapper;
+
+    private final AmbitClientFactory ambitClientFactory;
+
+    public AlgorithmResourceConsumer(ObjectMapper mapper, AmbitClientFactory ambitClientFactory){
+        this.mapper = mapper;
+        this.ambitClientFactory = ambitClientFactory;
     }
-
-    private ObjectMapper mapper;
-
-    private AmbitClientFactory ambitClientFactory;
 
     public AmbitTask mopacOriginalStructure(String datasetURI, String options) {
 

@@ -29,18 +29,9 @@
  */
 
 import com.github.jsonldjava.utils.JsonUtils;
-import model.dataset.Dataset;
-import model.dataset.Substance;
-import model.dto.ambit.AmbitTask;
-import model.dto.bundle.BundleProperties;
-import model.dto.bundle.BundleSubstances;
-import model.dto.study.Studies;
-import org.apache.commons.io.IOUtils;
-import resource.*;
+import resource_consumers.*;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 
@@ -54,11 +45,11 @@ class tester {
 
         org.apache.log4j.BasicConfigurator.configure();
 
-        DatasetResource datasetResource = new DatasetResource();
-        TaskResource taskResource = new TaskResource();
-        AlgorithmResource algorithmResource = new AlgorithmResource();
-        BundleResource bundleResource = new BundleResource();
-        SubstanceResource substanceResource = new SubstanceResource();
+        DatasetResourceConsumer datasetResourceConsumer = new DatasetResourceConsumer();
+        TaskResourceConsumer taskResourceConsumer = new TaskResourceConsumer();
+        AlgorithmResourceConsumer algorithmResourceConsumer = new AlgorithmResourceConsumer();
+        BundleResourceConsumer bundleResourceConsumer = new BundleResourceConsumer();
+        SubstanceResourceConsumer substanceResourceConsumer = new SubstanceResourceConsumer();
 /*
         URL pdbURL = null;
         try {
@@ -72,34 +63,34 @@ class tester {
             e.printStackTrace();
         }
 
-        AmbitTask result = datasetResource.createDatasetByPDB(file);
+        AmbitTask result = datasetResourceConsumer.createDatasetByPDB(file);
 
         while (result.getStatus().equals("Running") || result.getStatus().equals("Queued")) {
-            result = taskResource.getTask(result.getId());
+            result = taskResourceConsumer.getTask(result.getId());
         }
 
-        result = algorithmResource.mopacOriginalStructure(result.getResult(), "PM3 NOINTER MMOK BONDS MULLIK GNORM=1.0 T=30.00M");
+        result = algorithmResourceConsumer.mopacOriginalStructure(result.getResult(), "PM3 NOINTER MMOK BONDS MULLIK GNORM=1.0 T=30.00M");
 
         while (result.getStatus().equals("Running") || result.getStatus().equals("Queued")) {
-            result = taskResource.getTask(result.getId());
+            result = taskResourceConsumer.getTask(result.getId());
         }
 
-        Dataset dataset = datasetResource.getDatasetById(result.getResult().split("dataset/")[1]);
+        Dataset dataset = datasetResourceConsumer.getDatasetById(result.getResult().split("dataset/")[1]);
 
-        BundleProperties bundleProperties = bundleResource.getProperties("1");
-        BundleSubstances bundleSubstances = bundleResource.getSubstances("1");
+        BundleProperties bundleProperties = bundleResourceConsumer.getProperties("1");
+        BundleSubstances bundleSubstances = bundleResourceConsumer.getSubstances("1");
 
         for (Substance substance : bundleSubstances.getSubstance()) {
-            Studies studies = substanceResource.getStudiesBySubstanceId(substance.getURI().split("substance/")[1]);
+            Studies studies = substanceResourceConsumer.getStudiesBySubstanceId(substance.getURI().split("substance/")[1]);
             System.out.println(studies.getStudy().toString());
         }
 
-        Dataset datset = datasetResource.getStructuresByDatasetId("1");
+        Dataset datset = datasetResourceConsumer.getStructuresByDatasetId("1");
         System.out.println(datset.toString());
 
-        //   BundleSubstances bundleSubstances = bundleResource.getSubstances("1");
+        //   BundleSubstances bundleSubstances = bundleResourceConsumer.getSubstances("1");
 */
-        Object jsonLd = bundleResource.getBundleByJsonLD("1");
+        Object jsonLd = bundleResourceConsumer.getBundleByJsonLD("1");
         try {
             System.out.println(JsonUtils.toPrettyString(jsonLd));
         } catch (IOException e) {
