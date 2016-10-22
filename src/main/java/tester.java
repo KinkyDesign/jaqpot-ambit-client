@@ -29,7 +29,6 @@
  */
 
 import com.github.jsonldjava.utils.JsonUtils;
-import resource_consumers.*;
 
 import java.io.IOException;
 import java.security.KeyManagementException;
@@ -43,13 +42,11 @@ class tester {
         System.out.println("Hello word");
         byte[] file = new byte[0];
 
-        org.apache.log4j.BasicConfigurator.configure();
-
-        DatasetResourceConsumer datasetResourceConsumer = new DatasetResourceConsumer();
-        TaskResourceConsumer taskResourceConsumer = new TaskResourceConsumer();
-        AlgorithmResourceConsumer algorithmResourceConsumer = new AlgorithmResourceConsumer();
-        BundleResourceConsumer bundleResourceConsumer = new BundleResourceConsumer();
-        SubstanceResourceConsumer substanceResourceConsumer = new SubstanceResourceConsumer();
+//        DatasetResourceConsumer datasetResourceConsumer = new DatasetResourceConsumer();
+//        TaskResourceConsumer taskResourceConsumer = new TaskResourceConsumer();
+//        AlgorithmResourceConsumer algorithmResourceConsumer = new AlgorithmResourceConsumer();
+//        BundleResourceConsumer bundleResourceConsumer = new BundleResourceConsumer();
+//        SubstanceResourceConsumer substanceResourceConsumer = new SubstanceResourceConsumer();
 /*
         URL pdbURL = null;
         try {
@@ -90,12 +87,12 @@ class tester {
 
         //   BundleSubstances bundleSubstances = bundleResourceConsumer.getSubstances("1");
 */
-        Object jsonLd = bundleResourceConsumer.getBundleByJsonLD("1");
-        try {
-            System.out.println(JsonUtils.toPrettyString(jsonLd));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        Object jsonLd = bundleResourceConsumer.getBundleByJsonLD("1");
+//        try {
+//            System.out.println(JsonUtils.toPrettyString(jsonLd));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
-    }
+}
 
