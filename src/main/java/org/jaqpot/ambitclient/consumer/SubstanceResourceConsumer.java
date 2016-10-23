@@ -27,7 +27,6 @@
  *   with the aforementioned licence.
  *
  */
-
 package org.jaqpot.ambitclient.consumer;
 
 import org.jaqpot.ambitclient.AmbitClientFactory;
@@ -44,20 +43,17 @@ public class SubstanceResourceConsumer {
     private final String PATH = "https://apps.ideaconsult.net/enmtest/substance";
 
     private final ObjectMapper mapper;
+    private final AsyncHttpClient httpClient;
 
-    private final AmbitClientFactory ambitClientFactory;
-
-
-    public SubstanceResourceConsumer(ObjectMapper mapper, AmbitClientFactory ambitClientFactory){
+    public SubstanceResourceConsumer(ObjectMapper mapper, AsyncHttpClient httpClient) {
         this.mapper = mapper;
-        this.ambitClientFactory = ambitClientFactory;
+        this.httpClient = httpClient;
     }
 
     public Studies getStudiesBySubstanceId(String substanceId) {
         Studies result = null;
-        AsyncHttpClient c = ambitClientFactory.getClient();
 
-        Future<Studies> f = c
+        Future<Studies> f = httpClient
                 .prepareGet(PATH + "/" + substanceId + "/study")
                 .addHeader("Accept", "application/json")
                 .execute(new AsyncHandler<Studies>() {

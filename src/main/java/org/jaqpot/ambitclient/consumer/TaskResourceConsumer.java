@@ -27,13 +27,11 @@
  *   with the aforementioned licence.
  *
  */
-
 package org.jaqpot.ambitclient.consumer;
 
 /**
  * Created by Angelos Valsamis on 13/10/2016.
  */
-
 import org.jaqpot.ambitclient.AmbitClientFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jaqpot.ambitclient.model.dto.ambit.AmbitTask;
@@ -49,23 +47,20 @@ public class TaskResourceConsumer {
     private final String PATH = "https://apps.ideaconsult.net/enmtest/task";
 
     private final ObjectMapper mapper;
+    private final AsyncHttpClient httpClient;
 
-    private final AmbitClientFactory ambitClientFactory;
-
-
-    public TaskResourceConsumer(ObjectMapper mapper, AmbitClientFactory ambitClientFactory){
+    public TaskResourceConsumer(ObjectMapper mapper, AsyncHttpClient httpClient) {
         this.mapper = mapper;
-        this.ambitClientFactory = ambitClientFactory;
+        this.httpClient = httpClient;
     }
 
     public AmbitTask getTask(String taskUri) {
 
-        AmbitTask bodyResponse=null;
-        AsyncHttpClient c = ambitClientFactory.getClient();
+        AmbitTask bodyResponse = null;
 
-        Future<AmbitTaskArray> f = c
-                .prepareGet(PATH+"/"+taskUri)
-                .addHeader("Accept","application/json")
+        Future<AmbitTaskArray> f = httpClient
+                .prepareGet(PATH + "/" + taskUri)
+                .addHeader("Accept", "application/json")
                 .execute(new AsyncHandler<AmbitTaskArray>() {
 
                     private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -84,7 +79,7 @@ public class TaskResourceConsumer {
 
                     @Override
                     public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
-                        headers =  h.getHeaders();
+                        headers = h.getHeaders();
                         // The headers have been read
                         // If you don't want to read the body, or stop processing the response
                         return State.CONTINUE;
@@ -111,7 +106,7 @@ public class TaskResourceConsumer {
                     }
                 });
         try {
-            bodyResponse=f.get().getTask().get(0);
+            bodyResponse = f.get().getTask().get(0);
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }

@@ -27,7 +27,6 @@
  *   with the aforementioned licence.
  *
  */
-
 package org.jaqpot.ambitclient.consumer;
 
 import org.jaqpot.ambitclient.AmbitClientFactory;
@@ -50,21 +49,19 @@ public class DatasetResourceConsumer {
 
     private final ObjectMapper mapper;
 
-    private final AmbitClientFactory ambitClientFactory;
+    private final AsyncHttpClient httpClient;
 
-
-    public DatasetResourceConsumer(ObjectMapper mapper, AmbitClientFactory ambitClientFactory){
+    public DatasetResourceConsumer(ObjectMapper mapper, AsyncHttpClient httpClient) {
         this.mapper = mapper;
-        this.ambitClientFactory = ambitClientFactory;
+        this.httpClient = httpClient;
     }
 
     public Dataset getDatasetById(String datasetId) {
-        Dataset result=null;
-        AsyncHttpClient c = ambitClientFactory.getClient();
+        Dataset result = null;
 
-        Future<Dataset> f = c
-                .prepareGet(PATH+"/"+datasetId)
-                .addHeader("Accept","application/json")
+        Future<Dataset> f = httpClient
+                .prepareGet(PATH + "/" + datasetId)
+                .addHeader("Accept", "application/json")
                 .execute(new AsyncHandler<Dataset>() {
 
                     private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -83,7 +80,7 @@ public class DatasetResourceConsumer {
 
                     @Override
                     public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
-                        headers =  h.getHeaders();
+                        headers = h.getHeaders();
                         // The headers have been read
                         // If you don't want to read the body, or stop processing the response
                         return State.CONTINUE;
@@ -110,25 +107,23 @@ public class DatasetResourceConsumer {
                     }
                 });
         try {
-            result=f.get();
+            result = f.get();
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
         return result;
     }
 
-
     public AmbitTask createDatasetByPDB(byte[] file) {
 
-        AmbitTask bodyResponse=null;
-        AsyncHttpClient c = ambitClientFactory.getClient();
+        AmbitTask bodyResponse = null;
 
         String fileName = UUID.randomUUID().toString() + ".pdb";
 
-        Future<AmbitTaskArray> f = c
+        Future<AmbitTaskArray> f = httpClient
                 .preparePost(PATH)
-                .addBodyPart(new ByteArrayPart("file",file,"octet-stream",Charset.defaultCharset(),fileName))
-                .addHeader("Accept","application/json")
+                .addBodyPart(new ByteArrayPart("file", file, "octet-stream", Charset.defaultCharset(), fileName))
+                .addHeader("Accept", "application/json")
                 .execute(new AsyncHandler<AmbitTaskArray>() {
 
                     private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -147,7 +142,7 @@ public class DatasetResourceConsumer {
 
                     @Override
                     public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
-                        headers =  h.getHeaders();
+                        headers = h.getHeaders();
                         // The headers have been read
                         // If you don't want to read the body, or stop processing the response
                         return State.CONTINUE;
@@ -174,23 +169,20 @@ public class DatasetResourceConsumer {
                     }
                 });
         try {
-            bodyResponse=f.get().getTask().get(0);
+            bodyResponse = f.get().getTask().get(0);
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
         return bodyResponse;
     }
 
-
     public Dataset getStructuresByDatasetId(String datasetId) {
 
-        Dataset bodyResponse=null;
-        AsyncHttpClient c = ambitClientFactory.getClient();
+        Dataset bodyResponse = null;
 
-        Future<Dataset> f = c
-                .prepareGet(PATH+"/"+datasetId+"/structures")
-                .addHeader("Accept","application/json")
-
+        Future<Dataset> f = httpClient
+                .prepareGet(PATH + "/" + datasetId + "/structures")
+                .addHeader("Accept", "application/json")
                 .execute(new AsyncHandler<Dataset>() {
 
                     private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -209,7 +201,7 @@ public class DatasetResourceConsumer {
 
                     @Override
                     public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
-                        headers =  h.getHeaders();
+                        headers = h.getHeaders();
                         // The headers have been read
                         // If you don't want to read the body, or stop processing the response
                         return State.CONTINUE;
@@ -236,7 +228,7 @@ public class DatasetResourceConsumer {
                     }
                 });
         try {
-            bodyResponse=f.get();
+            bodyResponse = f.get();
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }

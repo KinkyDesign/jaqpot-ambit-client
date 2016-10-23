@@ -55,8 +55,22 @@ public class AmbitClientImpl implements AmbitClient {
 
     private static final Logger LOG = Logger.getLogger(AmbitClientImpl.class.getName());
 
+    private final DatasetResourceConsumer datasetConsumer;
+    private final TaskResourceConsumer taskConsumer;
+    private final AlgorithmResourceConsumer algorithmConsumer;
+    private final BundleResourceConsumer bundleConsumer;
+    private final SubstanceResourceConsumer substanceConsumer;
+
+    public AmbitClientImpl(DatasetResourceConsumer datasetConsumer, TaskResourceConsumer taskConsumer, AlgorithmResourceConsumer algorithmConsumer, BundleResourceConsumer bundleConsumer, SubstanceResourceConsumer substanceConsumer) {
+        this.datasetConsumer = datasetConsumer;
+        this.taskConsumer = taskConsumer;
+        this.algorithmConsumer = algorithmConsumer;
+        this.bundleConsumer = bundleConsumer;
+        this.substanceConsumer = substanceConsumer;
+    }
+
     @Override
-    public Dataset createMopacDataset(DatasetResourceConsumer datasetResourceConsumer, TaskResourceConsumer taskResourceConsumer, AlgorithmResourceConsumer algorithmResourceConsumer, String pdbFile, String options) {
+    public Dataset createMopacDataset(String pdbFile, String options) {
         URL pdbURL = null;
         byte[] file = new byte[0];
 
@@ -71,51 +85,51 @@ public class AmbitClientImpl implements AmbitClient {
             e.printStackTrace();
         }
 
-        AmbitTask result = datasetResourceConsumer.createDatasetByPDB(file);
+        AmbitTask result = datasetConsumer.createDatasetByPDB(file);
 
         while (result.getStatus().equals("Running") || result.getStatus().equals("Queued")) {
-            result = taskResourceConsumer.getTask(result.getId());
+            result = taskConsumer.getTask(result.getId());
         }
 
-        result = algorithmResourceConsumer.mopacOriginalStructure(result.getResult(), options); //"PM3 NOINTER MMOK BONDS MULLIK GNORM=1.0 T=30.00M"
+        result = algorithmConsumer.mopacOriginalStructure(result.getResult(), options); //"PM3 NOINTER MMOK BONDS MULLIK GNORM=1.0 T=30.00M"
 
         while (result.getStatus().equals("Running") || result.getStatus().equals("Queued")) {
-            result = taskResourceConsumer.getTask(result.getId());
+            result = taskConsumer.getTask(result.getId());
         }
 
-        return datasetResourceConsumer.getDatasetById(result.getResult().split("dataset/")[1]);
+        return datasetConsumer.getDatasetById(result.getResult().split("dataset/")[1]);
 
     }
 
     @Override
-    public Dataset getStructuresByDatasetId(DatasetResourceConsumer datasetResourceConsumer, String datasetId) {
-        return datasetResourceConsumer.getStructuresByDatasetId(datasetId);
+    public Dataset getStructuresByDatasetId(String datasetId) {
+        return datasetConsumer.getStructuresByDatasetId(datasetId);
     }
 
     @Override
-    public Dataset createDatasetByPDB(DatasetResourceConsumer datasetResourceConsumer, TaskResourceConsumer taskResourceConsumer, byte[] file) {
-        AmbitTask result = datasetResourceConsumer.createDatasetByPDB(file);
+    public Dataset createDatasetByPDB(byte[] file) {
+        AmbitTask result = datasetConsumer.createDatasetByPDB(file);
 
         while (result.getStatus().equals("Running") || result.getStatus().equals("Queued")) {
-            result = taskResourceConsumer.getTask(result.getId());
+            result = taskConsumer.getTask(result.getId());
         }
-        return datasetResourceConsumer.getDatasetById(result.getResult().split("dataset/")[1]);
+        return datasetConsumer.getDatasetById(result.getResult().split("dataset/")[1]);
     }
 
     @Override
-    public BundleSubstances getSubstances(BundleResourceConsumer bundleResourceConsumer, String bundleId) {
-        return bundleResourceConsumer.getSubstancesByBundleId(bundleId);
+    public BundleSubstances getSubstances(String bundleId) {
+        return bundleConsumer.getSubstancesByBundleId(bundleId);
 
     }
 
     @Override
-    public Studies getStudiesBySubstanceId(SubstanceResourceConsumer substanceResourceConsumer, String substanceId) {
-        return substanceResourceConsumer.getStudiesBySubstanceId(substanceId);
+    public Studies getStudiesBySubstanceId(String substanceId) {
+        return substanceConsumer.getStudiesBySubstanceId(substanceId);
     }
 
     @Override
-    public BundleProperties getPropertiesByBundleId(BundleResourceConsumer bundleResourceConsumer, String bundleId) {
-        return bundleResourceConsumer.getPropertiesByBundleId(bundleId);
+    public BundleProperties getPropertiesByBundleId(String bundleId) {
+        return bundleConsumer.getPropertiesByBundleId(bundleId);
     }
 
     private byte[] InputStreamToByteArray(InputStream is) throws IOException {

@@ -26,14 +26,13 @@
 *   All source files of Ambit Client that are stored on github are licensed
 *   with the aforementioned licence.
 *
-*/
-
+ */
 package org.jaqpot.ambitclient;
 
 /**
  * Created by Angelos Valsamis on 11/10/2016.
  */
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.AsyncHttpClientConfig;
 import org.asynchttpclient.DefaultAsyncHttpClient;
@@ -43,12 +42,30 @@ import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jaqpot.ambitclient.consumer.AlgorithmResourceConsumer;
+import org.jaqpot.ambitclient.consumer.BundleResourceConsumer;
+import org.jaqpot.ambitclient.consumer.DatasetResourceConsumer;
+import org.jaqpot.ambitclient.consumer.SubstanceResourceConsumer;
+import org.jaqpot.ambitclient.consumer.TaskResourceConsumer;
 
 public class AmbitClientFactory {
 
     private static final Logger LOG = Logger.getLogger(AmbitClientFactory.class.getName());
 
-    public AmbitClientFactory(){}
+    public static AmbitClient createNewClient() {
+        ObjectMapper mapper = new ObjectMapper();
+        AsyncHttpClient httpClient = ClientFactory.INSTANCE.getClient();
+
+        DatasetResourceConsumer datasetConsumer = new DatasetResourceConsumer(mapper, httpClient);
+        AlgorithmResourceConsumer algorithmConsumer = new AlgorithmResourceConsumer(mapper, httpClient);
+        BundleResourceConsumer bundleConsumer = new BundleResourceConsumer(mapper, httpClient);
+        SubstanceResourceConsumer substanceConsumer = new SubstanceResourceConsumer(mapper, httpClient);
+        TaskResourceConsumer taskConsumer = new TaskResourceConsumer(mapper, httpClient);
+
+        AmbitClient client = new AmbitClientImpl(datasetConsumer, taskConsumer, algorithmConsumer, bundleConsumer, substanceConsumer);
+
+        return client;
+    }
 
     private enum ClientFactory {
 
@@ -66,6 +83,7 @@ public class AmbitClientFactory {
             s = new DefaultAsyncHttpClient(config);
 
         }
+
         public AsyncHttpClient getClient() {
             return s;
         }

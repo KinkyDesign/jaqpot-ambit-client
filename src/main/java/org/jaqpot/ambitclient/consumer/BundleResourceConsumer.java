@@ -27,7 +27,6 @@
  *   with the aforementioned licence.
  *
  */
-
 package org.jaqpot.ambitclient.consumer;
 
 import org.jaqpot.ambitclient.AmbitClientFactory;
@@ -55,23 +54,20 @@ public class BundleResourceConsumer {
     String PATH = "https://apps.ideaconsult.net/enmtest/bundle";
 
     private final ObjectMapper mapper;
+    private final AsyncHttpClient httpClient;
 
-    private final AmbitClientFactory ambitClientFactory;
-
-
-    public BundleResourceConsumer(ObjectMapper mapper, AmbitClientFactory ambitClientFactory){
+    public BundleResourceConsumer(ObjectMapper mapper, AsyncHttpClient httpClient) {
         this.mapper = mapper;
-        this.ambitClientFactory = ambitClientFactory;
+        this.httpClient = httpClient;
     }
 
-    public BundleSubstances getSubstancesByBundleId (String bundleId) {
+    public BundleSubstances getSubstancesByBundleId(String bundleId) {
 
         BundleSubstances result = null;
-        AsyncHttpClient c = ambitClientFactory.getClient();
 
-        Future<BundleSubstances> f = c
-                .prepareGet(PATH+"/"+bundleId+"/substance")
-                .addHeader("Accept","application/json")
+        Future<BundleSubstances> f = httpClient
+                .prepareGet(PATH + "/" + bundleId + "/substance")
+                .addHeader("Accept", "application/json")
                 .execute(new AsyncHandler<BundleSubstances>() {
 
                     private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -90,7 +86,7 @@ public class BundleResourceConsumer {
 
                     @Override
                     public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
-                        headers =  h.getHeaders();
+                        headers = h.getHeaders();
                         // The headers have been read
                         // If you don't want to read the body, or stop processing the response
                         return State.CONTINUE;
@@ -118,22 +114,20 @@ public class BundleResourceConsumer {
                 });
 
         try {
-            result=f.get();
+            result = f.get();
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
         return result;
     }
 
-    public Object getBundleByJsonLD (String bundleId) {
-
+    public Object getBundleByJsonLD(String bundleId) {
 
         BundleSubstances result = null;
-        AsyncHttpClient c = ambitClientFactory.getClient();
 
-        Future<Object> f = c
-                .prepareGet(PATH+"/"+bundleId+"/substance")
-                .addHeader("Accept","application/ld+json")
+        Future<Object> f = httpClient
+                .prepareGet(PATH + "/" + bundleId + "/substance")
+                .addHeader("Accept", "application/ld+json")
                 .execute(new AsyncHandler<Object>() {
 
                     private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -152,7 +146,7 @@ public class BundleResourceConsumer {
 
                     @Override
                     public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
-                        headers =  h.getHeaders();
+                        headers = h.getHeaders();
                         // The headers have been read
                         // If you don't want to read the body, or stop processing the response
                         return State.CONTINUE;
@@ -169,42 +163,42 @@ public class BundleResourceConsumer {
 
                         Object jsonObject = JsonUtils.fromInputStream(inputStream);
                         Map<String, String> context = new HashMap<String, String>();
-                        context.put("sso","http://semanticscience.org/resource_consumers/");
-                        context.put("otee" , "http://www.opentox.org/echaEndpoints.owl#");
-                        context.put("bx" , "http://purl.org/net/nknouf/ns/bibtex#");
-                        context.put("npo" , "http://purl.bioontology.org/ontology/npo#");
-                        context.put("dcterms" , "http://purl.org/dc/terms/");
-                        context.put("rdfs" , "http://www.w3.org/2000/01/rdf-schema#");
-                        context.put("substance" , "https://apps.ideaconsult.net/data/substance/");
-                        context.put("rdf" , "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
-                        context.put("ot" , "http://www.opentox.org/api/1.1#");
-                        context.put("dc" , "http://purl.org/dc/elements/1.1/");
-                        context.put("enm" , "http://purl.enanomapper.org/onto/");
-                        context.put("foaf" , "http://xmlns.com/foaf/0.1/");
-                        context.put("ota" , "http://www.opentox.org/algorithmTypes.owl#");
-                        context.put("as" , "https://apps.ideaconsult.net/data/assay/");
-                        context.put("void" , "http://rdfs.org/ns/void#");
-                        context.put("mgroup" , "https://apps.ideaconsult.net/data/measuregroup/");
-                        context.put("obo" , "http://purl.obolibrary.org/obo/");
-                        context.put("ap" , "https://apps.ideaconsult.net/data/protocol/");
-                        context.put("am" , "https://apps.ideaconsult.net/data/model/");
-                        context.put("sio" , "http://semanticscience.org/resource_consumers/");
-                        context.put("ac" , "https://apps.ideaconsult.net/data/compound/");
-                        context.put("owl" , "http://www.w3.org/2002/07/owl#");
-                        context.put("ep" , "https://apps.ideaconsult.net/data/endpoint/");
-                        context.put("owner" , "https://apps.ideaconsult.net/data/owner/");
-                        context.put("xsd" , "http://www.w3.org/2001/XMLSchema#");
-                        context.put("ad" , "https://apps.ideaconsult.net/data/dataset/");
-                        context.put("ag" , "https://apps.ideaconsult.net/data/algorithm/");
-                        context.put("af" , "https://apps.ideaconsult.net/data/feature/");
-                        context.put("bao" ,"http://www.bioassayontology.org/bao#");
+                        context.put("sso", "http://semanticscience.org/resource_consumers/");
+                        context.put("otee", "http://www.opentox.org/echaEndpoints.owl#");
+                        context.put("bx", "http://purl.org/net/nknouf/ns/bibtex#");
+                        context.put("npo", "http://purl.bioontology.org/ontology/npo#");
+                        context.put("dcterms", "http://purl.org/dc/terms/");
+                        context.put("rdfs", "http://www.w3.org/2000/01/rdf-schema#");
+                        context.put("substance", "https://apps.ideaconsult.net/data/substance/");
+                        context.put("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
+                        context.put("ot", "http://www.opentox.org/api/1.1#");
+                        context.put("dc", "http://purl.org/dc/elements/1.1/");
+                        context.put("enm", "http://purl.enanomapper.org/onto/");
+                        context.put("foaf", "http://xmlns.com/foaf/0.1/");
+                        context.put("ota", "http://www.opentox.org/algorithmTypes.owl#");
+                        context.put("as", "https://apps.ideaconsult.net/data/assay/");
+                        context.put("void", "http://rdfs.org/ns/void#");
+                        context.put("mgroup", "https://apps.ideaconsult.net/data/measuregroup/");
+                        context.put("obo", "http://purl.obolibrary.org/obo/");
+                        context.put("ap", "https://apps.ideaconsult.net/data/protocol/");
+                        context.put("am", "https://apps.ideaconsult.net/data/model/");
+                        context.put("sio", "http://semanticscience.org/resource_consumers/");
+                        context.put("ac", "https://apps.ideaconsult.net/data/compound/");
+                        context.put("owl", "http://www.w3.org/2002/07/owl#");
+                        context.put("ep", "https://apps.ideaconsult.net/data/endpoint/");
+                        context.put("owner", "https://apps.ideaconsult.net/data/owner/");
+                        context.put("xsd", "http://www.w3.org/2001/XMLSchema#");
+                        context.put("ad", "https://apps.ideaconsult.net/data/dataset/");
+                        context.put("ag", "https://apps.ideaconsult.net/data/algorithm/");
+                        context.put("af", "https://apps.ideaconsult.net/data/feature/");
+                        context.put("bao", "http://www.bioassayontology.org/bao#");
                         JsonLdOptions options = new JsonLdOptions();
-                        options.useNamespaces=false;
+                        options.useNamespaces = false;
                         options.setExplicit(false);
                         options.setCompactArrays(false);
                         // Customise options...
                         // Call whichever JSONLD function you want! (e.g. compact)
-                        Object compact = JsonLdProcessor.compact(jsonObject,context,options);
+                        Object compact = JsonLdProcessor.compact(jsonObject, context, options);
                         return compact;
                     }
 
@@ -228,15 +222,14 @@ public class BundleResourceConsumer {
         return result;
     }
 
-    public BundleProperties getPropertiesByBundleId (String bundleId) {
+    public BundleProperties getPropertiesByBundleId(String bundleId) {
 
         String PATH = "https://apps.ideaconsult.net/enmtest/bundle";
 
-        AsyncHttpClient c = ambitClientFactory.getClient();
         BundleProperties result = null;
-        Future<BundleProperties> f = c
-                .prepareGet(PATH+"/"+bundleId+"/property")
-                .addHeader("Accept","application/json")
+        Future<BundleProperties> f = httpClient
+                .prepareGet(PATH + "/" + bundleId + "/property")
+                .addHeader("Accept", "application/json")
                 .execute(new AsyncHandler<BundleProperties>() {
 
                     private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -255,7 +248,7 @@ public class BundleResourceConsumer {
 
                     @Override
                     public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
-                        headers =  h.getHeaders();
+                        headers = h.getHeaders();
                         // The headers have been read
                         // If you don't want to read the body, or stop processing the response
                         return State.CONTINUE;
@@ -283,7 +276,7 @@ public class BundleResourceConsumer {
                     }
                 });
         try {
-            result=f.get();
+            result = f.get();
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }

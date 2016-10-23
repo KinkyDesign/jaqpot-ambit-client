@@ -27,10 +27,8 @@
  *   with the aforementioned licence.
  *
  */
-
 package org.jaqpot.ambitclient.consumer;
 
-import org.jaqpot.ambitclient.AmbitClientFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jaqpot.ambitclient.model.dto.ambit.AmbitTask;
 import org.jaqpot.ambitclient.model.dto.ambit.AmbitTaskArray;
@@ -45,25 +43,23 @@ public class AlgorithmResourceConsumer {
     private final String PATH = "https://apps.ideaconsult.net/enmtest/algorithm";
 
     private final ObjectMapper mapper;
+    private final AsyncHttpClient httpClient;
 
-    private final AmbitClientFactory ambitClientFactory;
-
-    public AlgorithmResourceConsumer(ObjectMapper mapper, AmbitClientFactory ambitClientFactory){
+    public AlgorithmResourceConsumer(ObjectMapper mapper, AsyncHttpClient httpClient) {
         this.mapper = mapper;
-        this.ambitClientFactory = ambitClientFactory;
+        this.httpClient = httpClient;
     }
 
     public AmbitTask mopacOriginalStructure(String datasetURI, String options) {
 
-        String algorithmName="ambit2.mopac.MopacOriginalStructure";
-        AmbitTask bodyResponse=null;
-        AsyncHttpClient c = ambitClientFactory.getClient();
+        String algorithmName = "ambit2.mopac.MopacOriginalStructure";
+        AmbitTask bodyResponse = null;
 
-        Future<AmbitTaskArray> f = c
-                .preparePost(PATH+"/"+algorithmName)
-                .addFormParam("dataset_uri",datasetURI)
+        Future<AmbitTaskArray> f = httpClient
+                .preparePost(PATH + "/" + algorithmName)
+                .addFormParam("dataset_uri", datasetURI)
                 .addFormParam("mopac_commands", options)
-                .addHeader("Accept","application/json")
+                .addHeader("Accept", "application/json")
                 .execute(new AsyncHandler<AmbitTaskArray>() {
 
                     private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -82,7 +78,7 @@ public class AlgorithmResourceConsumer {
 
                     @Override
                     public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
-                        headers =  h.getHeaders();
+                        headers = h.getHeaders();
                         // The headers have been read
                         // If you don't want to read the body, or stop processing the response
                         return State.CONTINUE;
@@ -109,7 +105,7 @@ public class AlgorithmResourceConsumer {
                     }
                 });
         try {
-            bodyResponse=f.get().getTask().get(0);
+            bodyResponse = f.get().getTask().get(0);
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }

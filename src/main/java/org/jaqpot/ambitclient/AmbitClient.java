@@ -26,8 +26,7 @@
 *   All source files of Ambit Client that are stored on github are licensed
 *   with the aforementioned licence.
 *
-*/
-
+ */
 package org.jaqpot.ambitclient;
 
 import org.jaqpot.ambitclient.consumer.DatasetResourceConsumer;
@@ -45,18 +44,16 @@ import org.jaqpot.ambitclient.model.dto.study.Studies;
  */
 public interface AmbitClient {
 
-    Dataset createMopacDataset(DatasetResourceConsumer datasetResourceConsumer, TaskResourceConsumer taskResourceConsumer, AlgorithmResourceConsumer algorithmResourceConsumer, String pdbFile, String options);
+    Dataset createMopacDataset(String pdbFile, String options);
 
-    Dataset getStructuresByDatasetId(DatasetResourceConsumer datasetResourceConsumer, String datasetId);
+    Dataset getStructuresByDatasetId(String datasetId);
 
-    Dataset createDatasetByPDB(DatasetResourceConsumer datasetResourceConsumer, TaskResourceConsumer taskResourceConsumer, byte[] file);
+    Dataset createDatasetByPDB(byte[] file);
 
-    BundleSubstances getSubstances(BundleResourceConsumer bundleResourceConsumer , String bundleId);
+    BundleSubstances getSubstances(String bundleId);
 
-    BundleProperties getPropertiesByBundleId (BundleResourceConsumer bundleResourceConsumer, String bundleId);
+    BundleProperties getPropertiesByBundleId(String bundleId);
 
-    Studies getStudiesBySubstanceId(SubstanceResourceConsumer substanceResourceConsumer, String substanceId);
-
-
+    Studies getStudiesBySubstanceId(String substanceId);
 
 }
