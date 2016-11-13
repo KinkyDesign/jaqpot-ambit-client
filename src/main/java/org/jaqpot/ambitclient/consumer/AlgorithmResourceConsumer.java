@@ -34,81 +34,32 @@ import org.jaqpot.ambitclient.model.dto.ambit.AmbitTask;
 import org.jaqpot.ambitclient.model.dto.ambit.AmbitTaskArray;
 import org.asynchttpclient.*;
 
-import java.io.ByteArrayOutputStream;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
-public class AlgorithmResourceConsumer {
+/**
+ * @author Angelos Valsamis
+ * @author Charalampos Chomenidis
+ */
+public class AlgorithmResourceConsumer extends BaseConsumer {
 
     private final String PATH = "https://apps.ideaconsult.net/enmtest/algorithm";
 
-    private final ObjectMapper mapper;
-    private final AsyncHttpClient httpClient;
+    private static final String ALGORITHM_BY_ID = "algorithm/%s";
 
-    public AlgorithmResourceConsumer(ObjectMapper mapper, AsyncHttpClient httpClient) {
-        this.mapper = mapper;
-        this.httpClient = httpClient;
+    private final String basePath;
+    private final String algorithmPath;
+
+    public AlgorithmResourceConsumer(ObjectMapper mapper, AsyncHttpClient httpClient, String basePath) {
+        super(httpClient, mapper);
+        this.basePath = basePath;
+        this.algorithmPath = createPath(this.basePath, ALGORITHM_BY_ID);
     }
 
-    public AmbitTask mopacOriginalStructure(String datasetURI, String options) {
-
-        String algorithmName = "ambit2.mopac.MopacOriginalStructure";
-        AmbitTask bodyResponse = null;
-
-        Future<AmbitTaskArray> f = httpClient
-                .preparePost(PATH + "/" + algorithmName)
-                .addFormParam("dataset_uri", datasetURI)
-                .addFormParam("mopac_commands", options)
-                .addHeader("Accept", "application/json")
-                .execute(new AsyncHandler<AmbitTaskArray>() {
-
-                    private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                    io.netty.handler.codec.http.HttpHeaders headers;
-
-                    @Override
-                    public State onStatusReceived(HttpResponseStatus status) throws Exception {
-                        int statusCode = status.getStatusCode();
-                        // The Status have been read
-                        // If you don't want to read the headers,body or stop processing the response
-                        if (statusCode >= 500) {
-                            return AsyncHandler.State.ABORT;
-                        }
-                        return State.CONTINUE;
-                    }
-
-                    @Override
-                    public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
-                        headers = h.getHeaders();
-                        // The headers have been read
-                        // If you don't want to read the body, or stop processing the response
-                        return State.CONTINUE;
-                    }
-
-                    @Override
-                    public AmbitTaskArray onCompleted() throws Exception {
-                        // Will be invoked once the response has been fully read or a ResponseComplete exception
-                        // has been thrown.
-                        // NOTE: should probably use Content-Encoding from headers
-                        bytes.flush();
-                        return mapper.readValue(bytes.toByteArray(), AmbitTaskArray.class);
-                    }
-
-                    @Override
-                    public void onThrowable(Throwable t) {
-                    }
-
-                    @Override
-                    public State onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
-                        bytes.write(httpResponseBodyPart.getBodyPartBytes());
-                        bytes.flush();
-                        return State.CONTINUE;
-                    }
-                });
-        try {
-            bodyResponse = f.get().getTask().get(0);
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-        return bodyResponse;
+    public CompletableFuture<AmbitTask> train(String algorithmId, Map<String, List<String>> parameters) {
+        String path = String.format(algorithmPath, algorithmId);
+        CompletableFuture<AmbitTaskArray> f = postForm(path, parameters, AmbitTaskArray.class);
+        return f.thenApply((ta) -> ta.getTask().get(0));
     }
 }

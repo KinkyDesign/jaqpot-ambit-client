@@ -29,210 +29,60 @@
  */
 package org.jaqpot.ambitclient.consumer;
 
-import org.jaqpot.ambitclient.AmbitClientFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jaqpot.ambitclient.model.dataset.Dataset;
 import org.jaqpot.ambitclient.model.dto.ambit.AmbitTask;
-import org.jaqpot.ambitclient.model.dto.ambit.AmbitTaskArray;
 import org.asynchttpclient.*;
 import org.asynchttpclient.request.body.multipart.ByteArrayPart;
 
-import java.io.ByteArrayOutputStream;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
+import org.asynchttpclient.request.body.multipart.Part;
+import org.jaqpot.ambitclient.model.dto.ambit.AmbitTaskArray;
 
-public class DatasetResourceConsumer {
+/**
+ * @author Angelos Valsamis
+ * @author Charalampos Chomenidis
+ */
+public class DatasetResourceConsumer extends BaseConsumer {
 
-    private final String PATH = "https://apps.ideaconsult.net/enmtest/dataset";
+    private final static String DATASET = "dataset";
+    private final static String DATASET_BY_ID = "dataset/%s";
+    private final static String STRUCTURES_BY_ID = "dataset/%s/structures";
 
-    private final ObjectMapper mapper;
+    private final String basePath;
+    private final String datasetPath;
+    private final String datasetByIdPath;
+    private final String structuresByIdPath;
 
-    private final AsyncHttpClient httpClient;
-
-    public DatasetResourceConsumer(ObjectMapper mapper, AsyncHttpClient httpClient) {
-        this.mapper = mapper;
-        this.httpClient = httpClient;
+    public DatasetResourceConsumer(ObjectMapper mapper, AsyncHttpClient httpClient, String basePath) {
+        super(httpClient, mapper);
+        this.basePath = basePath;
+        this.datasetPath = createPath(this.basePath, DATASET);
+        this.datasetByIdPath = createPath(this.basePath, DATASET_BY_ID);
+        this.structuresByIdPath = createPath(this.basePath, STRUCTURES_BY_ID);
     }
 
-    public Dataset getDatasetById(String datasetId) {
-        Dataset result = null;
-
-        Future<Dataset> f = httpClient
-                .prepareGet(PATH + "/" + datasetId)
-                .addHeader("Accept", "application/json")
-                .execute(new AsyncHandler<Dataset>() {
-
-                    private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                    io.netty.handler.codec.http.HttpHeaders headers;
-
-                    @Override
-                    public State onStatusReceived(HttpResponseStatus status) throws Exception {
-                        int statusCode = status.getStatusCode();
-                        // The Status have been read
-                        // If you don't want to read the headers,body or stop processing the response
-                        if (statusCode >= 500) {
-                            return AsyncHandler.State.ABORT;
-                        }
-                        return State.CONTINUE;
-                    }
-
-                    @Override
-                    public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
-                        headers = h.getHeaders();
-                        // The headers have been read
-                        // If you don't want to read the body, or stop processing the response
-                        return State.CONTINUE;
-                    }
-
-                    @Override
-                    public Dataset onCompleted() throws Exception {
-                        // Will be invoked once the response has been fully read or a ResponseComplete exception
-                        // has been thrown.
-                        // NOTE: should probably use Content-Encoding from headers
-                        bytes.flush();
-                        return mapper.readValue(bytes.toByteArray(), Dataset.class);
-                    }
-
-                    @Override
-                    public void onThrowable(Throwable t) {
-                    }
-
-                    @Override
-                    public State onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
-                        bytes.write(httpResponseBodyPart.getBodyPartBytes());
-                        bytes.flush();
-                        return State.CONTINUE;
-                    }
-                });
-        try {
-            result = f.get();
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-        return result;
+    public CompletableFuture<Dataset> getDatasetById(String datasetId) {
+        String path = String.format(datasetByIdPath, datasetId);
+        return get(path, Dataset.class);
     }
 
-    public AmbitTask createDatasetByPDB(byte[] file) {
-
-        AmbitTask bodyResponse = null;
-
+    public CompletableFuture<AmbitTask> createDatasetByPDB(byte[] file) {
         String fileName = UUID.randomUUID().toString() + ".pdb";
-
-        Future<AmbitTaskArray> f = httpClient
-                .preparePost(PATH)
-                .addBodyPart(new ByteArrayPart("file", file, "octet-stream", Charset.defaultCharset(), fileName))
-                .addHeader("Accept", "application/json")
-                .execute(new AsyncHandler<AmbitTaskArray>() {
-
-                    private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                    io.netty.handler.codec.http.HttpHeaders headers;
-
-                    @Override
-                    public State onStatusReceived(HttpResponseStatus status) throws Exception {
-                        int statusCode = status.getStatusCode();
-                        // The Status have been read
-                        // If you don't want to read the headers,body or stop processing the response
-                        if (statusCode >= 500) {
-                            return AsyncHandler.State.ABORT;
-                        }
-                        return State.CONTINUE;
-                    }
-
-                    @Override
-                    public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
-                        headers = h.getHeaders();
-                        // The headers have been read
-                        // If you don't want to read the body, or stop processing the response
-                        return State.CONTINUE;
-                    }
-
-                    @Override
-                    public AmbitTaskArray onCompleted() throws Exception {
-                        // Will be invoked once the response has been fully read or a ResponseComplete exception
-                        // has been thrown.
-                        // NOTE: should probably use Content-Encoding from headers
-                        bytes.flush();
-                        return mapper.readValue(bytes.toByteArray(), AmbitTaskArray.class);
-                    }
-
-                    @Override
-                    public void onThrowable(Throwable t) {
-                    }
-
-                    @Override
-                    public State onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
-                        bytes.write(httpResponseBodyPart.getBodyPartBytes());
-                        bytes.flush();
-                        return State.CONTINUE;
-                    }
-                });
-        try {
-            bodyResponse = f.get().getTask().get(0);
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-        return bodyResponse;
+        ByteArrayPart part = new ByteArrayPart("file", file, "octet-stream", Charset.defaultCharset(), fileName);
+        List<Part> bodyParts = new ArrayList<>();
+        bodyParts.add(part);
+        return postMultipart(datasetPath, bodyParts, AmbitTaskArray.class)
+                .thenApply((ta) -> ta.getTask().get(0));
     }
 
-    public Dataset getStructuresByDatasetId(String datasetId) {
-
-        Dataset bodyResponse = null;
-
-        Future<Dataset> f = httpClient
-                .prepareGet(PATH + "/" + datasetId + "/structures")
-                .addHeader("Accept", "application/json")
-                .execute(new AsyncHandler<Dataset>() {
-
-                    private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                    io.netty.handler.codec.http.HttpHeaders headers;
-
-                    @Override
-                    public State onStatusReceived(HttpResponseStatus status) throws Exception {
-                        int statusCode = status.getStatusCode();
-                        // The Status have been read
-                        // If you don't want to read the headers,body or stop processing the response
-                        if (statusCode >= 500) {
-                            return AsyncHandler.State.ABORT;
-                        }
-                        return State.CONTINUE;
-                    }
-
-                    @Override
-                    public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
-                        headers = h.getHeaders();
-                        // The headers have been read
-                        // If you don't want to read the body, or stop processing the response
-                        return State.CONTINUE;
-                    }
-
-                    @Override
-                    public Dataset onCompleted() throws Exception {
-                        // Will be invoked once the response has been fully read or a ResponseComplete exception
-                        // has been thrown.
-                        // NOTE: should probably use Content-Encoding from headers
-                        bytes.flush();
-                        return mapper.readValue(bytes.toByteArray(), Dataset.class);
-                    }
-
-                    @Override
-                    public void onThrowable(Throwable t) {
-                    }
-
-                    @Override
-                    public State onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
-                        bytes.write(httpResponseBodyPart.getBodyPartBytes());
-                        bytes.flush();
-                        return State.CONTINUE;
-                    }
-                });
-        try {
-            bodyResponse = f.get();
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-        return bodyResponse;
+    public CompletableFuture<Dataset> getStructuresByDatasetId(String datasetId) {
+        String path = String.format(structuresByIdPath, datasetId);
+        return get(path, Dataset.class);
     }
 
 }

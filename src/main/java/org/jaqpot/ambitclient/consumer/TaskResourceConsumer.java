@@ -29,87 +29,54 @@
  */
 package org.jaqpot.ambitclient.consumer;
 
-/**
- * Created by Angelos Valsamis on 13/10/2016.
- */
-import org.jaqpot.ambitclient.AmbitClientFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jaqpot.ambitclient.model.dto.ambit.AmbitTask;
 import org.jaqpot.ambitclient.model.dto.ambit.AmbitTaskArray;
 import org.asynchttpclient.*;
 
-import java.io.ByteArrayOutputStream;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 
-public class TaskResourceConsumer {
+/**
+ * @author Angelos Valsamis
+ * @author Charalampos Chomenidis
+ */
+public class TaskResourceConsumer extends BaseConsumer {
 
-    private final String PATH = "https://apps.ideaconsult.net/enmtest/task";
+    private static final long POLLING_INTERVAL_MILLIS = 500;
 
-    private final ObjectMapper mapper;
-    private final AsyncHttpClient httpClient;
+    private static final String TASK_BY_ID = "task/%s";
 
-    public TaskResourceConsumer(ObjectMapper mapper, AsyncHttpClient httpClient) {
-        this.mapper = mapper;
-        this.httpClient = httpClient;
+    private final String basePath;
+    private final String taskByIdPath;
+
+    public TaskResourceConsumer(ObjectMapper mapper, AsyncHttpClient httpClient, String basePath) {
+        super(httpClient, mapper);
+        this.basePath = basePath;
+        this.taskByIdPath = createPath(this.basePath, TASK_BY_ID);
     }
 
-    public AmbitTask getTask(String taskUri) {
+    public CompletableFuture<AmbitTask> getTask(String taskId) {
+        String path = String.format(taskByIdPath, taskId);
+        return get(path, AmbitTaskArray.class)
+                .thenApply((ta) -> ta.getTask().get(0));
+    }
 
-        AmbitTask bodyResponse = null;
-
-        Future<AmbitTaskArray> f = httpClient
-                .prepareGet(PATH + "/" + taskUri)
-                .addHeader("Accept", "application/json")
-                .execute(new AsyncHandler<AmbitTaskArray>() {
-
-                    private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                    io.netty.handler.codec.http.HttpHeaders headers;
-
-                    @Override
-                    public State onStatusReceived(HttpResponseStatus status) throws Exception {
-                        int statusCode = status.getStatusCode();
-                        // The Status have been read
-                        // If you don't want to read the headers,body or stop processing the response
-                        if (statusCode >= 500) {
-                            return AsyncHandler.State.ABORT;
-                        }
-                        return State.CONTINUE;
+    public CompletableFuture<AmbitTask> waitTask(String taskId, long timeoutMillis) {
+        CompletableFuture<AmbitTask> tf = getTask(taskId);
+        int iterations = (int) (timeoutMillis / POLLING_INTERVAL_MILLIS);
+        for (int i = 0; i < iterations; i++) {
+            tf = tf.thenCompose(task -> {
+                try {
+                    if (task.getStatus().equals("Running") || task.getStatus().equals("Queued")) {
+                        Thread.sleep(POLLING_INTERVAL_MILLIS);
+                        return getTask(taskId);
                     }
-
-                    @Override
-                    public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
-                        headers = h.getHeaders();
-                        // The headers have been read
-                        // If you don't want to read the body, or stop processing the response
-                        return State.CONTINUE;
-                    }
-
-                    @Override
-                    public AmbitTaskArray onCompleted() throws Exception {
-                        // Will be invoked once the response has been fully read or a ResponseComplete exception
-                        // has been thrown.
-                        // NOTE: should probably use Content-Encoding from headers
-                        bytes.flush();
-                        return mapper.readValue(bytes.toByteArray(), AmbitTaskArray.class);
-                    }
-
-                    @Override
-                    public void onThrowable(Throwable t) {
-                    }
-
-                    @Override
-                    public State onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
-                        bytes.write(httpResponseBodyPart.getBodyPartBytes());
-                        bytes.flush();
-                        return State.CONTINUE;
-                    }
-                });
-        try {
-            bodyResponse = f.get().getTask().get(0);
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
+                } catch (InterruptedException ex) {
+                    return CompletableFuture.supplyAsync(() -> task);
+                }
+                return CompletableFuture.supplyAsync(() -> task);
+            });
         }
-        return bodyResponse;
+        return tf;
     }
 }
