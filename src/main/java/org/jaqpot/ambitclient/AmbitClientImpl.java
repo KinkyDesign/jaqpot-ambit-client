@@ -30,7 +30,6 @@
 package org.jaqpot.ambitclient;
 
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import org.jaqpot.ambitclient.consumer.DatasetResourceConsumer;
 import org.jaqpot.ambitclient.consumer.SubstanceResourceConsumer;
 import org.jaqpot.ambitclient.consumer.BundleResourceConsumer;
@@ -46,14 +45,24 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Logger;
+import org.jaqpot.ambitclient.exception.AmbitClientException;
 
 /**
- * Created by Angelos Valsamis on 20/10/2016.
+ * @author Angelos Valsamis
+ * @author Charalampos Chomenidis
  */
 public class AmbitClientImpl implements AmbitClient {
 
     private static final Logger LOG = Logger.getLogger(AmbitClientImpl.class.getName());
+
+    private static final String MOPAC_COMMANDS = "PM3 NOINTER MMOK BONDS MULLIK GNORM=1.0 T=30.00M";
 
     private final DatasetResourceConsumer datasetConsumer;
     private final TaskResourceConsumer taskConsumer;
@@ -70,69 +79,59 @@ public class AmbitClientImpl implements AmbitClient {
     }
 
     @Override
-    public Dataset createMopacDataset(String pdbFile, String options) {
-        URL pdbURL = null;
-        byte[] file = new byte[0];
-
-        try {
-            pdbURL = new URL(pdbFile);//"http://enanomapper.ntua.gr/pdbRepo/17002-ICSDNiO.pdb"
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-        try {
-            file = InputStreamToByteArray(pdbURL.openStream());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        AmbitTask result = datasetConsumer.createDatasetByPDB(file);
-
-        while (result.getStatus().equals("Running") || result.getStatus().equals("Queued")) {
-            result = taskConsumer.getTask(result.getId());
+    public CompletableFuture<Dataset> generateMopacDescriptors(String pdbFile) {
+        byte[] file;
+        if (pdbFile.startsWith("data:")) {
+            String base64pdb = pdbFile.split(",")[1];
+            file = Base64.getDecoder().decode(base64pdb.getBytes());
+        } else {
+            try {
+                URL pdbURL = new URL(pdbFile);
+                file = inputStreamToByteArray(pdbURL.openStream());
+            } catch (MalformedURLException ex) {
+                throw new AmbitClientException("Invalid .pdb file url", ex);
+            } catch (IOException ex) {
+                throw new AmbitClientException("IO Error when trying to download .pdb file", ex);
+            }
         }
 
-        result = algorithmConsumer.mopacOriginalStructure(result.getResult(), options); //"PM3 NOINTER MMOK BONDS MULLIK GNORM=1.0 T=30.00M"
-
-        while (result.getStatus().equals("Running") || result.getStatus().equals("Queued")) {
-            result = taskConsumer.getTask(result.getId());
-        }
-
-        return datasetConsumer.getDatasetById(result.getResult().split("dataset/")[1]);
-
+        CompletableFuture<AmbitTask> result = datasetConsumer.createDatasetByPDB(file);
+        return result
+                .thenCompose((t) -> taskConsumer.waitTask(t.getId(), 5000))
+                .thenCompose((t) -> {
+                    String datasetURI = t.getResult();
+                    Map<String, List<String>> parameters = new HashMap<>();
+                    parameters.put("dataset_uri", Arrays.asList(datasetURI));
+                    parameters.put("mopac_commands", Arrays.asList(MOPAC_COMMANDS));
+                    return algorithmConsumer.train("ambit2.mopac.MopacOriginalStructure", parameters);
+                })
+                .thenCompose(t -> taskConsumer.waitTask(t.getId(), 5000))
+                .thenCompose(t -> datasetConsumer.getDatasetById(t.getResult().split("dataset/")[1]));
     }
 
     @Override
-    public Dataset getStructuresByDatasetId(String datasetId) {
+
+    public CompletableFuture<Dataset> getStructuresByDatasetId(String datasetId) {
         return datasetConsumer.getStructuresByDatasetId(datasetId);
     }
 
     @Override
-    public Dataset createDatasetByPDB(byte[] file) {
-        AmbitTask result = datasetConsumer.createDatasetByPDB(file);
-
-        while (result.getStatus().equals("Running") || result.getStatus().equals("Queued")) {
-            result = taskConsumer.getTask(result.getId());
-        }
-        return datasetConsumer.getDatasetById(result.getResult().split("dataset/")[1]);
-    }
-
-    @Override
-    public BundleSubstances getSubstances(String bundleId) {
+    public CompletableFuture<BundleSubstances> getSubstances(String bundleId) {
         return bundleConsumer.getSubstancesByBundleId(bundleId);
 
     }
 
     @Override
-    public Studies getStudiesBySubstanceId(String substanceId) {
+    public CompletableFuture<Studies> getStudiesBySubstanceId(String substanceId) {
         return substanceConsumer.getStudiesBySubstanceId(substanceId);
     }
 
     @Override
-    public BundleProperties getPropertiesByBundleId(String bundleId) {
+    public CompletableFuture<BundleProperties> getPropertiesByBundleId(String bundleId) {
         return bundleConsumer.getPropertiesByBundleId(bundleId);
     }
 
-    private byte[] InputStreamToByteArray(InputStream is) throws IOException {
+    private byte[] inputStreamToByteArray(InputStream is) throws IOException {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 
         int nRead;
