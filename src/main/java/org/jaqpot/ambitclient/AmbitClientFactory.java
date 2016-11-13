@@ -29,9 +29,6 @@
  */
 package org.jaqpot.ambitclient;
 
-/**
- * Created by Angelos Valsamis on 11/10/2016.
- */
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.AsyncHttpClientConfig;
@@ -48,19 +45,23 @@ import org.jaqpot.ambitclient.consumer.DatasetResourceConsumer;
 import org.jaqpot.ambitclient.consumer.SubstanceResourceConsumer;
 import org.jaqpot.ambitclient.consumer.TaskResourceConsumer;
 
+/**
+ * @author Angelos Valsamis
+ * @author Charalampos Chomenidis
+ */
 public class AmbitClientFactory {
 
     private static final Logger LOG = Logger.getLogger(AmbitClientFactory.class.getName());
 
-    public static AmbitClient createNewClient() {
+    public static AmbitClient createNewClient(String basePath) {
         ObjectMapper mapper = new ObjectMapper();
         AsyncHttpClient httpClient = ClientFactory.INSTANCE.getClient();
 
-        DatasetResourceConsumer datasetConsumer = new DatasetResourceConsumer(mapper, httpClient);
-        AlgorithmResourceConsumer algorithmConsumer = new AlgorithmResourceConsumer(mapper, httpClient);
-        BundleResourceConsumer bundleConsumer = new BundleResourceConsumer(mapper, httpClient);
-        SubstanceResourceConsumer substanceConsumer = new SubstanceResourceConsumer(mapper, httpClient);
-        TaskResourceConsumer taskConsumer = new TaskResourceConsumer(mapper, httpClient);
+        DatasetResourceConsumer datasetConsumer = new DatasetResourceConsumer(mapper, httpClient, basePath);
+        AlgorithmResourceConsumer algorithmConsumer = new AlgorithmResourceConsumer(mapper, httpClient, basePath);
+        BundleResourceConsumer bundleConsumer = new BundleResourceConsumer(mapper, httpClient, basePath);
+        SubstanceResourceConsumer substanceConsumer = new SubstanceResourceConsumer(mapper, httpClient, basePath);
+        TaskResourceConsumer taskConsumer = new TaskResourceConsumer(mapper, httpClient, basePath);
 
         AmbitClient client = new AmbitClientImpl(datasetConsumer, taskConsumer, algorithmConsumer, bundleConsumer, substanceConsumer);
 
