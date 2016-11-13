@@ -27,27 +27,27 @@
 *   with the aforementioned licence.
 *
  */
-package org.jaqpot.ambitclient;
-
-import java.util.concurrent.CompletableFuture;
-import org.jaqpot.ambitclient.model.dataset.Dataset;
-import org.jaqpot.ambitclient.model.dto.bundle.BundleProperties;
-import org.jaqpot.ambitclient.model.dto.bundle.BundleSubstances;
-import org.jaqpot.ambitclient.model.dto.study.Studies;
+package org.jaqpot.ambitclient.exception;
 
 /**
  * @author Angelos Valsamis
+ * @author Charalampos Chomenidis
  */
-public interface AmbitClient {
+public class AmbitClientException extends RuntimeException {
 
-    CompletableFuture<Dataset> generateMopacDescriptors(String pdbFile);
+    public AmbitClientException() {
+    }
 
-    CompletableFuture<Dataset> getStructuresByDatasetId(String datasetId);
+    public AmbitClientException(String message) {
+        super(message);
+    }
 
-    CompletableFuture<BundleSubstances> getSubstances(String bundleId);
+    public AmbitClientException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-    CompletableFuture<BundleProperties> getPropertiesByBundleId(String bundleId);
-
-    CompletableFuture<Studies> getStudiesBySubstanceId(String substanceId);
+    public AmbitClientException(Throwable cause) {
+        super(cause);
+    }
 
 }
