@@ -63,7 +63,7 @@ public class AmbitClientFactory {
         SubstanceResourceConsumer substanceConsumer = new SubstanceResourceConsumer(mapper, httpClient, basePath);
         TaskResourceConsumer taskConsumer = new TaskResourceConsumer(mapper, httpClient, basePath);
 
-        AmbitClient client = new AmbitClientImpl(datasetConsumer, taskConsumer, algorithmConsumer, bundleConsumer, substanceConsumer);
+        AmbitClient client = new AmbitClientImpl(datasetConsumer, taskConsumer, algorithmConsumer, bundleConsumer, substanceConsumer, httpClient);
 
         return client;
     }
@@ -87,15 +87,6 @@ public class AmbitClientFactory {
 
         public AsyncHttpClient getClient() {
             return s;
-        }
-    }
-
-    @PreDestroy
-    public void destroy() {
-        try {
-            getClient().close();
-        } catch (IOException ex) {
-            LOG.log(Level.SEVERE, "Could not successfully close AmbitClient", ex);
         }
     }
 

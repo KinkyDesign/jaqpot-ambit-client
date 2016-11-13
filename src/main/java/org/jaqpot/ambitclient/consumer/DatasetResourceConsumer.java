@@ -63,7 +63,7 @@ public class DatasetResourceConsumer extends BaseConsumer {
         this.basePath = basePath;
         this.datasetPath = createPath(this.basePath, DATASET);
         this.datasetByIdPath = createPath(this.basePath, DATASET_BY_ID);
-        this.structuresByIdPath = createPath(this.basePath, STRUCTURES_BY_ID);
+        this.structuresByIdPath = createPath(this.basePath, STRUCTURES_BY_ID);        
     }
 
     public CompletableFuture<Dataset> getDatasetById(String datasetId) {

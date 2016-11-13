@@ -6,8 +6,9 @@
 package org.jaqpot.ambitclient.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
+import com.sun.xml.internal.messaging.saaj.util.ByteInputStream;
+import java.io.InputStream;
+import java.io.SequenceInputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
@@ -35,14 +36,13 @@ public abstract class BaseConsumer {
     }
 
     public <T> CompletableFuture<T> get(String path, Class<T> c) {
-        return httpClient
+
+        CompletableFuture<T> future = httpClient
                 .prepareGet(path)
                 .addHeader("Accept", "application/json")
                 .execute(new AsyncHandler<T>() {
 
-                    private PipedOutputStream pos;
-                    private PipedInputStream pis;
-
+                    private InputStream sis;
                     io.netty.handler.codec.http.HttpHeaders headers;
 
                     @Override
@@ -51,8 +51,6 @@ public abstract class BaseConsumer {
                         if (statusCode >= 400) {
                             return AsyncHandler.State.ABORT;
                         }
-                        pos = new PipedOutputStream();
-                        pis = new PipedInputStream(pos);
                         return AsyncHandler.State.CONTINUE;
                     }
 
@@ -64,8 +62,7 @@ public abstract class BaseConsumer {
 
                     @Override
                     public T onCompleted() throws Exception {
-                        pos.flush();
-                        return mapper.readValue(pis, c);
+                        return mapper.readValue(sis, c);
                     }
 
                     @Override
@@ -74,18 +71,21 @@ public abstract class BaseConsumer {
 
                     @Override
                     public AsyncHandler.State onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
-                        pos.write(httpResponseBodyPart.getBodyPartBytes());
+                        if (sis == null) {
+                            sis = new ByteInputStream(httpResponseBodyPart.getBodyPartBytes(), httpResponseBodyPart.length());
+                        } else {
+                            sis = new SequenceInputStream(sis, new ByteInputStream(httpResponseBodyPart.getBodyPartBytes(), httpResponseBodyPart.length()));
+                        }
                         return AsyncHandler.State.CONTINUE;
                     }
-                })
-                .toCompletableFuture();
+                }).toCompletableFuture();
+        return future;
     }
 
     private <T> CompletableFuture<T> post(BoundRequestBuilder builder, Class<T> c) {
         return builder.execute(new AsyncHandler<T>() {
 
-            private PipedOutputStream pos;
-            private PipedInputStream pis;
+            private InputStream sis;
             io.netty.handler.codec.http.HttpHeaders headers;
 
             @Override
@@ -94,8 +94,6 @@ public abstract class BaseConsumer {
                 if (statusCode >= 400) {
                     return AsyncHandler.State.ABORT;
                 }
-                pos = new PipedOutputStream();
-                pis = new PipedInputStream(pos);
                 return AsyncHandler.State.CONTINUE;
             }
 
@@ -107,8 +105,7 @@ public abstract class BaseConsumer {
 
             @Override
             public T onCompleted() throws Exception {
-                pos.flush();
-                return mapper.readValue(pis, c);
+                return mapper.readValue(sis, c);
             }
 
             @Override
@@ -117,7 +114,11 @@ public abstract class BaseConsumer {
 
             @Override
             public AsyncHandler.State onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
-                pos.write(httpResponseBodyPart.getBodyPartBytes());
+                if (sis == null) {
+                    sis = new ByteInputStream(httpResponseBodyPart.getBodyPartBytes(), httpResponseBodyPart.length());
+                } else {
+                    sis = new SequenceInputStream(sis, new ByteInputStream(httpResponseBodyPart.getBodyPartBytes(), httpResponseBodyPart.length()));
+                }
                 return AsyncHandler.State.CONTINUE;
             }
         }).toCompletableFuture();

@@ -52,6 +52,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Logger;
+import org.asynchttpclient.AsyncHttpClient;
 import org.jaqpot.ambitclient.exception.AmbitClientException;
 
 /**
@@ -69,13 +70,15 @@ public class AmbitClientImpl implements AmbitClient {
     private final AlgorithmResourceConsumer algorithmConsumer;
     private final BundleResourceConsumer bundleConsumer;
     private final SubstanceResourceConsumer substanceConsumer;
+    private final AsyncHttpClient client;
 
-    public AmbitClientImpl(DatasetResourceConsumer datasetConsumer, TaskResourceConsumer taskConsumer, AlgorithmResourceConsumer algorithmConsumer, BundleResourceConsumer bundleConsumer, SubstanceResourceConsumer substanceConsumer) {
+    public AmbitClientImpl(DatasetResourceConsumer datasetConsumer, TaskResourceConsumer taskConsumer, AlgorithmResourceConsumer algorithmConsumer, BundleResourceConsumer bundleConsumer, SubstanceResourceConsumer substanceConsumer, AsyncHttpClient client) {
         this.datasetConsumer = datasetConsumer;
         this.taskConsumer = taskConsumer;
         this.algorithmConsumer = algorithmConsumer;
         this.bundleConsumer = bundleConsumer;
         this.substanceConsumer = substanceConsumer;
+        this.client = client;
     }
 
     @Override
@@ -110,24 +113,28 @@ public class AmbitClientImpl implements AmbitClient {
     }
 
     @Override
+    public CompletableFuture<Dataset> getDataset(String datasetId) {
+        return datasetConsumer.getDatasetById(datasetId);
+    }
 
-    public CompletableFuture<Dataset> getStructuresByDatasetId(String datasetId) {
+    @Override
+    public CompletableFuture<Dataset> getDatasetStructures(String datasetId) {
         return datasetConsumer.getStructuresByDatasetId(datasetId);
     }
 
     @Override
-    public CompletableFuture<BundleSubstances> getSubstances(String bundleId) {
+    public CompletableFuture<BundleSubstances> getBundleSubstances(String bundleId) {
         return bundleConsumer.getSubstancesByBundleId(bundleId);
 
     }
 
     @Override
-    public CompletableFuture<Studies> getStudiesBySubstanceId(String substanceId) {
+    public CompletableFuture<Studies> getSubstanceStudies(String substanceId) {
         return substanceConsumer.getStudiesBySubstanceId(substanceId);
     }
 
     @Override
-    public CompletableFuture<BundleProperties> getPropertiesByBundleId(String bundleId) {
+    public CompletableFuture<BundleProperties> getBundleProperties(String bundleId) {
         return bundleConsumer.getPropertiesByBundleId(bundleId);
     }
 
@@ -144,5 +151,10 @@ public class AmbitClientImpl implements AmbitClient {
         buffer.flush();
 
         return buffer.toByteArray();
+    }
+
+    @Override
+    public void close() throws IOException {
+        this.client.close();
     }
 }

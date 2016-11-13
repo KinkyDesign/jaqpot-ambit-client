@@ -29,6 +29,7 @@
  */
 package org.jaqpot.ambitclient;
 
+import java.io.Closeable;
 import java.util.concurrent.CompletableFuture;
 import org.jaqpot.ambitclient.model.dataset.Dataset;
 import org.jaqpot.ambitclient.model.dto.bundle.BundleProperties;
@@ -38,16 +39,18 @@ import org.jaqpot.ambitclient.model.dto.study.Studies;
 /**
  * @author Angelos Valsamis
  */
-public interface AmbitClient {
+public interface AmbitClient extends Closeable {
 
     CompletableFuture<Dataset> generateMopacDescriptors(String pdbFile);
 
-    CompletableFuture<Dataset> getStructuresByDatasetId(String datasetId);
+    CompletableFuture<Dataset> getDataset(String datasetId);
 
-    CompletableFuture<BundleSubstances> getSubstances(String bundleId);
+    CompletableFuture<Dataset> getDatasetStructures(String datasetId);
 
-    CompletableFuture<BundleProperties> getPropertiesByBundleId(String bundleId);
+    CompletableFuture<BundleSubstances> getBundleSubstances(String bundleId);
 
-    CompletableFuture<Studies> getStudiesBySubstanceId(String substanceId);
+    CompletableFuture<BundleProperties> getBundleProperties(String bundleId);
+
+    CompletableFuture<Studies> getSubstanceStudies(String substanceId);
 
 }
