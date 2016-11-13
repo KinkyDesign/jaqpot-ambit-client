@@ -35,9 +35,6 @@ import org.asynchttpclient.AsyncHttpClientConfig;
 import org.asynchttpclient.DefaultAsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClientConfig;
 
-import javax.annotation.PreDestroy;
-import java.io.IOException;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jaqpot.ambitclient.consumer.AlgorithmResourceConsumer;
 import org.jaqpot.ambitclient.consumer.BundleResourceConsumer;

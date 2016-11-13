@@ -38,6 +38,7 @@ import org.jaqpot.ambitclient.model.dto.study.Studies;
 
 /**
  * @author Angelos Valsamis
+ * @author Charalampos Chomenidis
  */
 public interface AmbitClient extends Closeable {
 
