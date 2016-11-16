@@ -44,6 +44,7 @@ import org.asynchttpclient.HttpResponseBodyPart;
 import org.asynchttpclient.HttpResponseHeaders;
 import org.asynchttpclient.HttpResponseStatus;
 import org.asynchttpclient.request.body.multipart.Part;
+import org.jaqpot.ambitclient.exception.AmbitClientException;
 
 /**
  * @author Angelos Valsamis
@@ -91,6 +92,7 @@ public abstract class BaseConsumer {
 
                     @Override
                     public void onThrowable(Throwable t) {
+                        throw new AmbitClientException(t);
                     }
 
                     @Override
@@ -134,6 +136,7 @@ public abstract class BaseConsumer {
 
             @Override
             public void onThrowable(Throwable t) {
+                throw new AmbitClientException(t);
             }
 
             @Override
