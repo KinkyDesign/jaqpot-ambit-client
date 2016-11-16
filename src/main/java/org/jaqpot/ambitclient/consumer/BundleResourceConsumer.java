@@ -30,11 +30,17 @@
 package org.jaqpot.ambitclient.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.jaqpot.ambitclient.model.dto.bundle.BundleProperties;
 import org.jaqpot.ambitclient.model.dto.bundle.BundleSubstances;
 import org.asynchttpclient.*;
 
 import java.util.concurrent.CompletableFuture;
+import org.jaqpot.ambitclient.model.dto.ambit.AmbitTask;
+import org.jaqpot.ambitclient.model.dto.ambit.AmbitTaskArray;
 
 /**
  * @author Angelos Valsamis
@@ -42,18 +48,36 @@ import java.util.concurrent.CompletableFuture;
  */
 public class BundleResourceConsumer extends BaseConsumer {
 
+    private static final String BUNDLE = "bundle";
     private static final String BUNDLE_SUBSTANCES_BY_ID = "bundle/%s/substance";
     private static final String BUNDLE_PROPERTIES_BY_ID = "bundle/%s/property";
 
     private final String basePath;
+    private final String bundlePath;
     private final String bundleSubstancesByIdPath;
     private final String bundlePropertiesByIdPath;
 
     public BundleResourceConsumer(ObjectMapper mapper, AsyncHttpClient httpClient, String basePath) {
         super(httpClient, mapper);
         this.basePath = basePath;
+        this.bundlePath = createPath(this.basePath, BUNDLE);
         this.bundleSubstancesByIdPath = createPath(this.basePath, BUNDLE_SUBSTANCES_BY_ID);
         this.bundlePropertiesByIdPath = createPath(this.basePath, BUNDLE_PROPERTIES_BY_ID);
+    }
+
+    public CompletableFuture<AmbitTask> createBundle(String description, String userName, String substanceOwner) {
+        String path = bundlePath;
+        Map<String, List<String>> parameters = new HashMap<>();
+        parameters.put("title", Arrays.asList("owner-bundle"));
+        parameters.put("description", Arrays.asList(description));
+        parameters.put("source", Arrays.asList(userName));
+        parameters.put("seeAlso", Arrays.asList(substanceOwner));
+        parameters.put("license", Arrays.asList("Copyright of " + userName));
+        parameters.put("rightsHolder", Arrays.asList(userName));
+        parameters.put("maintainer", Arrays.asList(userName));
+        parameters.put("stars", Arrays.asList("1"));
+        return postForm(path, parameters, AmbitTaskArray.class)
+                .thenApply((ta) -> ta.getTask().get(0));
     }
 
     public CompletableFuture<BundleSubstances> getSubstancesByBundleId(String bundleId) {
