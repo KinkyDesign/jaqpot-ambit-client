@@ -80,6 +80,25 @@ public class BundleResourceConsumer extends BaseConsumer {
                 .thenApply((ta) -> ta.getTask().get(0));
     }
 
+    public CompletableFuture<AmbitTask> addSubstanceToBundle(String bundleId, String substanceUri) {
+        String path = String.format(bundleSubstancesByIdPath, bundleId);
+        Map<String, List<String>> parameters = new HashMap<>();
+        parameters.put("substance_uri", Arrays.asList(substanceUri));
+        parameters.put("command", Arrays.asList("add"));
+        return postForm(path, parameters, AmbitTaskArray.class)
+                .thenApply((ta) -> ta.getTask().get(0));
+    }
+
+    public CompletableFuture<AmbitTask> addPropertyToBundle(String bundleId, String topCategory, String endpointCategory) {
+        String path = String.format(bundlePropertiesByIdPath, bundleId);
+        Map<String, List<String>> parameters = new HashMap<>();
+        parameters.put("topcategory", Arrays.asList(topCategory));
+        parameters.put("endpointcategory", Arrays.asList(endpointCategory));
+        parameters.put("command", Arrays.asList("add"));
+        return postForm(path, parameters, AmbitTaskArray.class)
+                .thenApply((ta) -> ta.getTask().get(0));
+    }
+
     public CompletableFuture<BundleSubstances> getSubstancesByBundleId(String bundleId) {
         String path = String.format(bundleSubstancesByIdPath, bundleId);
         return get(path, BundleSubstances.class);
