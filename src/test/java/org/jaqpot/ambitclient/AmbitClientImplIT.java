@@ -145,14 +145,9 @@ public class AmbitClientImplIT {
         props.put("P-CHEM", Arrays.asList("PC_GRANULOMETRY_SECTION"));
         bundleData.setProperties(props);
         bundleData.setSubstances(null);
-       // bundleData.setSubstances(Arrays.asList("https://apps.ideaconsult.net/enmtest/substance/IUC4-efdb21bb-e79f-3286-a988-b6f6944d3734",
-       //         "https://apps.ideaconsult.net/enmtest/substance/FCSV-0e1a05ec-6045-3419-89e5-6e48e1c62e3c"));
-
         CompletableFuture<String> result = client.createBundle(bundleData, username);
-        String bundleData1 = result.get();
-
-        System.out.println(bundleData1);
-        assertNotNull(result);
+        String resultS = result.get();
+        assertNotNull(resultS);
     }
 
 }

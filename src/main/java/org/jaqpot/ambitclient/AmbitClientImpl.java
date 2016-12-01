@@ -123,18 +123,14 @@ public class AmbitClientImpl implements AmbitClient {
                 .thenCompose((t) -> {
                     bundleUri[0] = t.getResult();
                     bundle[0] = String.valueOf(bundleUri[0].split("bundle/")[1]);
-
-                    System.out.println(bundleUri[0]);
                     List<String> substances = bundleData.getSubstances();
                     if (substances == null || substances.isEmpty())
                         return substanceOwnerResourceConsumer.getOwnerSubstances(bundleData.getSubstanceOwner());
                     return CompletableFuture.completedFuture(null);
                 }).thenCompose((t) -> {
-                    System.out.println(bundleUri[0]);
                     List<String> substances = bundleData.getSubstances() == null ? t : bundleData.getSubstances();
                     List<CompletableFuture<AmbitTask>> completableFutureList = new LinkedList<CompletableFuture<AmbitTask>>();
                     for (String substance : substances) {
-                        System.out.println(substance);
                         completableFutureList.add(bundleConsumer.putSubstanceByBundleId(bundle[0], substance).thenCompose(s -> taskConsumer.waitTask(s.getId(), 5000)));
                     }
                     return CompletableFuture.allOf((completableFutureList.toArray(new CompletableFuture[completableFutureList.size()])))
@@ -142,7 +138,6 @@ public class AmbitClientImpl implements AmbitClient {
                                     .map(CompletableFuture::join)
                             );
                 }).thenCompose((t) -> {
-                    System.out.println(bundleUri[0]);
                     Map<String, List<String>> properties = bundleData.getProperties();
                     if (properties == null || properties.isEmpty()) {
                         properties = new HashMap<>();
@@ -162,11 +157,9 @@ public class AmbitClientImpl implements AmbitClient {
                         }
                     }
                     List<CompletableFuture<AmbitTask>> completableFutureList = new LinkedList<CompletableFuture<AmbitTask>>();
-
                     for (String topCategory : properties.keySet()) {
                         List<String> subCategories = properties.get(topCategory);
                         for (String subCategory : subCategories) {
-                            System.out.println(topCategory + " " + subCategory);
                             completableFutureList.add(bundleConsumer.putPropertyByBundleId(bundle[0], topCategory, subCategory).thenCompose(s -> taskConsumer.waitTask(s.getId(), 5000)));
                         }
                     }
@@ -176,7 +169,6 @@ public class AmbitClientImpl implements AmbitClient {
                             );
                 }).thenCompose(
                         t -> {
-                            System.out.println(bundleUri[0]);
                             return CompletableFuture.completedFuture("Bundle succesffully created with id " + bundleUri[0]);
                         });
 
