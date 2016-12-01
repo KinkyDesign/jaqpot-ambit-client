@@ -29,31 +29,25 @@
  */
 package org.jaqpot.ambitclient;
 
-import java.io.ByteArrayOutputStream;
-import org.jaqpot.ambitclient.consumer.DatasetResourceConsumer;
-import org.jaqpot.ambitclient.consumer.SubstanceResourceConsumer;
-import org.jaqpot.ambitclient.consumer.BundleResourceConsumer;
-import org.jaqpot.ambitclient.consumer.AlgorithmResourceConsumer;
-import org.jaqpot.ambitclient.consumer.TaskResourceConsumer;
+import org.asynchttpclient.AsyncHttpClient;
+import org.jaqpot.ambitclient.consumer.*;
+import org.jaqpot.ambitclient.exception.AmbitClientException;
+import org.jaqpot.ambitclient.model.BundleData;
 import org.jaqpot.ambitclient.model.dataset.Dataset;
 import org.jaqpot.ambitclient.model.dto.ambit.AmbitTask;
+import org.jaqpot.ambitclient.model.dto.ambit.ProtocolCategory;
 import org.jaqpot.ambitclient.model.dto.bundle.BundleProperties;
 import org.jaqpot.ambitclient.model.dto.bundle.BundleSubstances;
 import org.jaqpot.ambitclient.model.dto.study.Studies;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Logger;
-import org.asynchttpclient.AsyncHttpClient;
-import org.jaqpot.ambitclient.exception.AmbitClientException;
 
 /**
  * @author Angelos Valsamis
@@ -70,14 +64,16 @@ public class AmbitClientImpl implements AmbitClient {
     private final AlgorithmResourceConsumer algorithmConsumer;
     private final BundleResourceConsumer bundleConsumer;
     private final SubstanceResourceConsumer substanceConsumer;
+    private final SubstanceOwnerResourceConsumer substanceOwnerResourceConsumer;
     private final AsyncHttpClient client;
 
-    public AmbitClientImpl(DatasetResourceConsumer datasetConsumer, TaskResourceConsumer taskConsumer, AlgorithmResourceConsumer algorithmConsumer, BundleResourceConsumer bundleConsumer, SubstanceResourceConsumer substanceConsumer, AsyncHttpClient client) {
+    public AmbitClientImpl(DatasetResourceConsumer datasetConsumer, TaskResourceConsumer taskConsumer, AlgorithmResourceConsumer algorithmConsumer, BundleResourceConsumer bundleConsumer, SubstanceResourceConsumer substanceConsumer, SubstanceOwnerResourceConsumer substanceOwnerResourceConsumer, AsyncHttpClient client) {
         this.datasetConsumer = datasetConsumer;
         this.taskConsumer = taskConsumer;
         this.algorithmConsumer = algorithmConsumer;
         this.bundleConsumer = bundleConsumer;
         this.substanceConsumer = substanceConsumer;
+        this.substanceOwnerResourceConsumer = substanceOwnerResourceConsumer;
         this.client = client;
     }
 
@@ -110,6 +106,80 @@ public class AmbitClientImpl implements AmbitClient {
                 })
                 .thenCompose(t -> taskConsumer.waitTask(t.getId(), 5000))
                 .thenCompose(t -> datasetConsumer.getDatasetById(t.getResult().split("dataset/")[1]));
+    }
+
+    @Override
+    public CompletableFuture<String> createBundle(BundleData bundleData, String username) {
+        String substanceOwner = bundleData.getSubstanceOwner();
+        if (substanceOwner == null || substanceOwner.isEmpty()) {
+            throw new AmbitClientException("Field substanceOwner cannot be empty.");
+        }
+        final String[] bundleUri = new String[1];
+        final String[] bundle = new String[1];
+
+        CompletableFuture<AmbitTask> result = bundleConsumer.createBundle(bundleData.getDescription(), username, substanceOwner);
+        return result
+                .thenCompose(t -> taskConsumer.waitTask(t.getId(), 5000))
+                .thenCompose((t) -> {
+                    bundleUri[0] = t.getResult();
+                    bundle[0] = String.valueOf(bundleUri[0].split("bundle/")[1]);
+
+                    System.out.println(bundleUri[0]);
+                    List<String> substances = bundleData.getSubstances();
+                    if (substances == null || substances.isEmpty())
+                        return substanceOwnerResourceConsumer.getOwnerSubstances(bundleData.getSubstanceOwner());
+                    return CompletableFuture.completedFuture(null);
+                }).thenCompose((t) -> {
+                    System.out.println(bundleUri[0]);
+                    List<String> substances = bundleData.getSubstances() == null ? t : bundleData.getSubstances();
+                    List<CompletableFuture<AmbitTask>> completableFutureList = new LinkedList<CompletableFuture<AmbitTask>>();
+                    for (String substance : substances) {
+                        System.out.println(substance);
+                        completableFutureList.add(bundleConsumer.putSubstanceByBundleId(bundle[0], substance).thenCompose(s -> taskConsumer.waitTask(s.getId(), 5000)));
+                    }
+                    return CompletableFuture.allOf((completableFutureList.toArray(new CompletableFuture[completableFutureList.size()])))
+                            .thenApply(v -> completableFutureList.stream()
+                                    .map(CompletableFuture::join)
+                            );
+                }).thenCompose((t) -> {
+                    System.out.println(bundleUri[0]);
+                    Map<String, List<String>> properties = bundleData.getProperties();
+                    if (properties == null || properties.isEmpty()) {
+                        properties = new HashMap<>();
+                        for (ProtocolCategory category : ProtocolCategory.values()) {
+                            String topCategoryName = category.getTopCategory();
+                            String categoryName = category.name();
+
+                            if (properties.containsKey(topCategoryName)) {
+                                List<String> categoryValues = properties.get(topCategoryName);
+                                categoryValues.add(categoryName);
+                                properties.put(topCategoryName, categoryValues);
+                            } else {
+                                List<String> categoryValues = new ArrayList<>();
+                                categoryValues.add(categoryName);
+                                properties.put(topCategoryName, categoryValues);
+                            }
+                        }
+                    }
+                    List<CompletableFuture<AmbitTask>> completableFutureList = new LinkedList<CompletableFuture<AmbitTask>>();
+
+                    for (String topCategory : properties.keySet()) {
+                        List<String> subCategories = properties.get(topCategory);
+                        for (String subCategory : subCategories) {
+                            System.out.println(topCategory + " " + subCategory);
+                            completableFutureList.add(bundleConsumer.putPropertyByBundleId(bundle[0], topCategory, subCategory).thenCompose(s -> taskConsumer.waitTask(s.getId(), 5000)));
+                        }
+                    }
+                    return CompletableFuture.allOf((completableFutureList.toArray(new CompletableFuture[completableFutureList.size()])))
+                            .thenApply(v -> completableFutureList.stream()
+                                    .map(CompletableFuture::join)
+                            );
+                }).thenCompose(
+                        t -> {
+                            System.out.println(bundleUri[0]);
+                            return CompletableFuture.completedFuture("Bundle succesffully created with id " + bundleUri[0]);
+                        });
+
     }
 
     @Override

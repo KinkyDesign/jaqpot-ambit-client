@@ -41,6 +41,7 @@ import java.util.concurrent.CompletableFuture;
  */
 public class SubstanceResourceConsumer extends BaseConsumer {
 
+
     private final static String STUDY_BY_ID = "substance/%s/study";
 
     private final String basePath;

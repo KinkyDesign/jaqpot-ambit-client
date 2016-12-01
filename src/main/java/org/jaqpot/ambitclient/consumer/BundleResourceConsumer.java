@@ -30,17 +30,24 @@
 package org.jaqpot.ambitclient.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.jaqpot.ambitclient.model.BundleData;
 import org.jaqpot.ambitclient.model.dto.bundle.BundleProperties;
 import org.jaqpot.ambitclient.model.dto.bundle.BundleSubstances;
 import org.asynchttpclient.*;
 
 import java.util.concurrent.CompletableFuture;
+
 import org.jaqpot.ambitclient.model.dto.ambit.AmbitTask;
 import org.jaqpot.ambitclient.model.dto.ambit.AmbitTaskArray;
+
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.MultivaluedMap;
 
 /**
  * @author Angelos Valsamis
@@ -49,11 +56,14 @@ import org.jaqpot.ambitclient.model.dto.ambit.AmbitTaskArray;
 public class BundleResourceConsumer extends BaseConsumer {
 
     private static final String BUNDLE = "bundle";
+    private static final String BUNDLE_BY_ID = "bundle/%s";
+
     private static final String BUNDLE_SUBSTANCES_BY_ID = "bundle/%s/substance";
     private static final String BUNDLE_PROPERTIES_BY_ID = "bundle/%s/property";
 
     private final String basePath;
     private final String bundlePath;
+    private final String bundleByIdPath;
     private final String bundleSubstancesByIdPath;
     private final String bundlePropertiesByIdPath;
 
@@ -61,6 +71,7 @@ public class BundleResourceConsumer extends BaseConsumer {
         super(httpClient, mapper);
         this.basePath = basePath;
         this.bundlePath = createPath(this.basePath, BUNDLE);
+        this.bundleByIdPath = createPath(this.basePath, BUNDLE_BY_ID);
         this.bundleSubstancesByIdPath = createPath(this.basePath, BUNDLE_SUBSTANCES_BY_ID);
         this.bundlePropertiesByIdPath = createPath(this.basePath, BUNDLE_PROPERTIES_BY_ID);
     }
@@ -89,6 +100,31 @@ public class BundleResourceConsumer extends BaseConsumer {
         String path = String.format(bundlePropertiesByIdPath, bundleId);
         return get(path, BundleProperties.class);
     }
+
+    public CompletableFuture<BundleData> getBundleById(String bundleId) {
+        String path = String.format(bundleByIdPath, bundleId);
+        return get(path, BundleData.class);
+    }
+
+    public CompletableFuture<AmbitTask> putSubstanceByBundleId(String bundleId, String substanceURI) {
+        String path = String.format(bundleSubstancesByIdPath, bundleId);
+        MultivaluedMap<String, String> formParameters = new MultivaluedHashMap<>();
+        formParameters.putSingle("substance_uri", substanceURI);
+        formParameters.putSingle("command", "add");
+        return put(path, formParameters, AmbitTaskArray.class)
+                .thenApply((ta) -> ta.getTask().get(0));
+    }
+
+    public CompletableFuture<AmbitTask> putPropertyByBundleId(String bundleId, String topCategory, String subCategory) {
+        String path = String.format(bundlePropertiesByIdPath, bundleId);
+        MultivaluedMap<String, String> formParameters = new MultivaluedHashMap<>();
+        formParameters.putSingle("topcategory", topCategory);
+        formParameters.putSingle("endpointcategory", subCategory);
+        formParameters.putSingle("command", "add");
+        return put(path, formParameters, AmbitTaskArray.class)
+                .thenApply((ta) -> ta.getTask().get(0));
+    }
+
 
 //    public Object getBundleByJsonLD(String bundleId) {
 //
