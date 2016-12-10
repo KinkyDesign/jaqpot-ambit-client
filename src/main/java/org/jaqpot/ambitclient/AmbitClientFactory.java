@@ -29,15 +29,12 @@
  */
 package org.jaqpot.ambitclient;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.AsyncHttpClientConfig;
 import org.asynchttpclient.DefaultAsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClientConfig;
-
-import java.util.logging.Logger;
-
 import org.jaqpot.ambitclient.consumer.*;
+import org.jaqpot.ambitclient.serialize.Serializer;
 
 /**
  * @author Angelos Valsamis
@@ -45,19 +42,16 @@ import org.jaqpot.ambitclient.consumer.*;
  */
 public class AmbitClientFactory {
 
-    private static final Logger LOG = Logger.getLogger(AmbitClientFactory.class.getName());
-
-    public static AmbitClient createNewClient(String basePath) {
-        ObjectMapper mapper = new ObjectMapper();
+    public static AmbitClient createNewClient(String basePath, Serializer serializer) {
         AsyncHttpClient httpClient = ClientFactory.INSTANCE.getClient();
 
-        DatasetResourceConsumer datasetConsumer = new DatasetResourceConsumer(mapper, httpClient, basePath);
-        AlgorithmResourceConsumer algorithmConsumer = new AlgorithmResourceConsumer(mapper, httpClient, basePath);
-        BundleResourceConsumer bundleConsumer = new BundleResourceConsumer(mapper, httpClient, basePath);
-        SubstanceResourceConsumer substanceConsumer = new SubstanceResourceConsumer(mapper, httpClient, basePath);
-        TaskResourceConsumer taskConsumer = new TaskResourceConsumer(mapper, httpClient, basePath);
-        SubstanceOwnerResourceConsumer substanceOwnerResourceConsumer = new SubstanceOwnerResourceConsumer(mapper, httpClient, basePath);
-        AmbitClient client = new AmbitClientImpl(datasetConsumer, taskConsumer, algorithmConsumer, bundleConsumer, substanceConsumer, substanceOwnerResourceConsumer,  httpClient);
+        DatasetResourceConsumer datasetConsumer = new DatasetResourceConsumer(serializer, httpClient, basePath);
+        AlgorithmResourceConsumer algorithmConsumer = new AlgorithmResourceConsumer(serializer, httpClient, basePath);
+        BundleResourceConsumer bundleConsumer = new BundleResourceConsumer(serializer, httpClient, basePath);
+        SubstanceResourceConsumer substanceConsumer = new SubstanceResourceConsumer(serializer, httpClient, basePath);
+        TaskResourceConsumer taskConsumer = new TaskResourceConsumer(serializer, httpClient, basePath);
+        SubstanceOwnerResourceConsumer substanceOwnerResourceConsumer = new SubstanceOwnerResourceConsumer(serializer, httpClient, basePath);
+        AmbitClient client = new AmbitClientImpl(datasetConsumer, taskConsumer, algorithmConsumer, bundleConsumer, substanceConsumer, substanceOwnerResourceConsumer, httpClient);
 
         return client;
     }

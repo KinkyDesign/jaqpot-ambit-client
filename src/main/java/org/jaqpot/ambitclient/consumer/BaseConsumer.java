@@ -29,8 +29,7 @@
  */
 package org.jaqpot.ambitclient.consumer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sun.xml.internal.messaging.saaj.util.ByteInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.List;
@@ -45,6 +44,7 @@ import org.asynchttpclient.HttpResponseHeaders;
 import org.asynchttpclient.HttpResponseStatus;
 import org.asynchttpclient.request.body.multipart.Part;
 import org.jaqpot.ambitclient.exception.AmbitClientException;
+import org.jaqpot.ambitclient.serialize.Serializer;
 
 /**
  * @author Angelos Valsamis
@@ -53,11 +53,11 @@ import org.jaqpot.ambitclient.exception.AmbitClientException;
 public abstract class BaseConsumer {
 
     protected final AsyncHttpClient httpClient;
-    protected final ObjectMapper mapper;
+    protected final Serializer serializer;
 
-    public BaseConsumer(AsyncHttpClient httpClient, ObjectMapper mapper) {
+    public BaseConsumer(AsyncHttpClient httpClient, Serializer serializer) {
         this.httpClient = httpClient;
-        this.mapper = mapper;
+        this.serializer = serializer;
     }
 
     public <T> CompletableFuture<T> get(String path, Class<T> c) {
@@ -87,7 +87,7 @@ public abstract class BaseConsumer {
 
                     @Override
                     public T onCompleted() throws Exception {
-                        return mapper.readValue(sis, c);
+                        return serializer.parse(sis, c);
                     }
 
                     @Override
@@ -98,9 +98,9 @@ public abstract class BaseConsumer {
                     @Override
                     public AsyncHandler.State onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
                         if (sis == null) {
-                            sis = new ByteInputStream(httpResponseBodyPart.getBodyPartBytes(), httpResponseBodyPart.length());
+                            sis = new ByteArrayInputStream(httpResponseBodyPart.getBodyPartBytes(), 0, httpResponseBodyPart.length());
                         } else {
-                            sis = new SequenceInputStream(sis, new ByteInputStream(httpResponseBodyPart.getBodyPartBytes(), httpResponseBodyPart.length()));
+                            sis = new SequenceInputStream(sis, new ByteArrayInputStream(httpResponseBodyPart.getBodyPartBytes(), 0, httpResponseBodyPart.length()));
                         }
                         return AsyncHandler.State.CONTINUE;
                     }
@@ -131,7 +131,7 @@ public abstract class BaseConsumer {
 
             @Override
             public T onCompleted() throws Exception {
-                return mapper.readValue(sis, c);
+                return serializer.parse(sis, c);
             }
 
             @Override
@@ -142,15 +142,14 @@ public abstract class BaseConsumer {
             @Override
             public AsyncHandler.State onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
                 if (sis == null) {
-                    sis = new ByteInputStream(httpResponseBodyPart.getBodyPartBytes(), httpResponseBodyPart.length());
+                    sis = new ByteArrayInputStream(httpResponseBodyPart.getBodyPartBytes(), 0, httpResponseBodyPart.length());
                 } else {
-                    sis = new SequenceInputStream(sis, new ByteInputStream(httpResponseBodyPart.getBodyPartBytes(), httpResponseBodyPart.length()));
+                    sis = new SequenceInputStream(sis, new ByteArrayInputStream(httpResponseBodyPart.getBodyPartBytes(), 0, httpResponseBodyPart.length()));
                 }
                 return AsyncHandler.State.CONTINUE;
             }
         }).toCompletableFuture();
     }
-
 
     public <T> CompletableFuture<T> put(String path, Map<String, List<String>> parameters, Class<T> c) {
 
@@ -180,7 +179,7 @@ public abstract class BaseConsumer {
 
                     @Override
                     public T onCompleted() throws Exception {
-                        return mapper.readValue(sis, c);
+                        return serializer.parse(sis, c);
                     }
 
                     @Override
@@ -191,9 +190,9 @@ public abstract class BaseConsumer {
                     @Override
                     public AsyncHandler.State onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
                         if (sis == null) {
-                            sis = new ByteInputStream(httpResponseBodyPart.getBodyPartBytes(), httpResponseBodyPart.length());
+                            sis = new ByteArrayInputStream(httpResponseBodyPart.getBodyPartBytes(), 0, httpResponseBodyPart.length());
                         } else {
-                            sis = new SequenceInputStream(sis, new ByteInputStream(httpResponseBodyPart.getBodyPartBytes(), httpResponseBodyPart.length()));
+                            sis = new SequenceInputStream(sis, new ByteArrayInputStream(httpResponseBodyPart.getBodyPartBytes(), 0, httpResponseBodyPart.length()));
                         }
                         return AsyncHandler.State.CONTINUE;
                     }
@@ -203,20 +202,18 @@ public abstract class BaseConsumer {
 
     public <T> CompletableFuture<T> postForm(String path, Map<String, List<String>> parameters, Class<T> c) {
         return post(httpClient
-                        .preparePost(path)
-                        .setFormParams(parameters)
-                        .addHeader("Accept", "application/json"),
+                .preparePost(path)
+                .setFormParams(parameters)
+                .addHeader("Accept", "application/json"),
                 c
         );
     }
 
-
-
     public <T> CompletableFuture<T> postMultipart(String path, List<Part> bodyParts, Class<T> c) {
         return post(httpClient
-                        .preparePost(path)
-                        .setBodyParts(bodyParts)
-                        .addHeader("Accept", "application/json"),
+                .preparePost(path)
+                .setBodyParts(bodyParts)
+                .addHeader("Accept", "application/json"),
                 c
         );
     }

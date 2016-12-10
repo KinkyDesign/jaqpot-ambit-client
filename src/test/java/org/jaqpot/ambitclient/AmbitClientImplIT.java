@@ -29,6 +29,7 @@
  */
 package org.jaqpot.ambitclient;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -62,7 +63,7 @@ public class AmbitClientImplIT {
 
     @BeforeClass
     public static void setUpClass() {
-        client = AmbitClientFactory.createNewClient("https://apps.ideaconsult.net/enmtest");
+        client = AmbitClientFactory.createNewClient("https://apps.ideaconsult.net/enmtest", new JacksonSerializer(new ObjectMapper()));
     }
 
     @AfterClass
@@ -133,15 +134,14 @@ public class AmbitClientImplIT {
         assertNotNull(props);
     }
 
-
     @org.junit.Test
     public void testCreateBundle() throws InterruptedException, ExecutionException {
         System.out.println("createBundle");
-        BundleData bundleData= new BundleData();
-        String username ="guest";
+        BundleData bundleData = new BundleData();
+        String username = "guest";
         bundleData.setDescription("a bundle with protein corona data");
         bundleData.setSubstanceOwner("CNLB-00B0A42C-3392-81F3-89F7-1F097956F48A");
-        HashMap<String,List<String>> props = new HashMap<>();
+        HashMap<String, List<String>> props = new HashMap<>();
         props.put("P-CHEM", Arrays.asList("PC_GRANULOMETRY_SECTION"));
         bundleData.setProperties(props);
         bundleData.setSubstances(null);
