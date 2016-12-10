@@ -27,22 +27,39 @@
  *   with the aforementioned licence.
  *
  */
-
 package org.jaqpot.ambitclient.model;
-
-/**
- * Created by Angelos Valsamis on 6/10/2016.
- */
 
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @author Angelos Valsamis
+ * @author Charalampos Chomenidis
+ */
 public class BundleData {
 
+    private String bundleId;
+    private String bundleUri;
     private String description;
     private String substanceOwner;
     private List<String> substances;
     private Map<String, List<String>> properties;
+
+    public String getBundleId() {
+        return bundleId;
+    }
+
+    public void setBundleId(String bundleId) {
+        this.bundleId = bundleId;
+    }
+
+    public String getBundleUri() {
+        return bundleUri;
+    }
+
+    public void setBundleUri(String bundleUri) {
+        this.bundleUri = bundleUri;
+    }
 
     public String getDescription() {
         return description;
@@ -77,4 +94,3 @@ public class BundleData {
     }
 
 }
-

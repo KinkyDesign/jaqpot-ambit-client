@@ -70,16 +70,15 @@ public class SubstanceOwnerResourceConsumer extends BaseConsumer {
     public CompletableFuture<List<String>> getOwnerSubstances(String ownerId) {
         String path = String.format(ownerSubstancesByIdPath, ownerId);
         return get(path, BundleSubstances.class)
-                .thenApply(
-                        (ta) -> {
-                            if (ta.getSubstance() != null && !ta.getSubstance().isEmpty()) {
-                                return ta.getSubstance()
-                                        .stream()
-                                        .map(Substance::getURI)
-                                        .collect(Collectors.toList());
-                            }
-                            return null;
-                        });
+                .thenApply((ta) -> {
+                    if (ta.getSubstance() != null && !ta.getSubstance().isEmpty()) {
+                        return ta.getSubstance()
+                                .stream()
+                                .map(Substance::getURI)
+                                .collect(Collectors.toList());
+                    }
+                    return null;
+                });
     }
 
 }

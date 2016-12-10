@@ -55,6 +55,7 @@ import java.util.concurrent.CompletableFuture;
 public class AmbitClientImpl implements AmbitClient {
 
     private static final String MOPAC_COMMANDS = "PM3 NOINTER MMOK BONDS MULLIK GNORM=1.0 T=30.00M";
+    private static final long TIMEOUT = 5000L;
 
     private final DatasetResourceConsumer datasetConsumer;
     private final TaskResourceConsumer taskConsumer;
@@ -93,7 +94,7 @@ public class AmbitClientImpl implements AmbitClient {
 
         CompletableFuture<AmbitTask> result = datasetConsumer.createDatasetByPDB(file);
         return result
-                .thenCompose((t) -> taskConsumer.waitTask(t.getId(), 5000))
+                .thenCompose((t) -> taskConsumer.waitTask(t.getId(), TIMEOUT))
                 .thenCompose((t) -> {
                     String datasetURI = t.getResult();
                     Map<String, List<String>> parameters = new HashMap<>();
@@ -101,7 +102,7 @@ public class AmbitClientImpl implements AmbitClient {
                     parameters.put("mopac_commands", Arrays.asList(MOPAC_COMMANDS));
                     return algorithmConsumer.train("ambit2.mopac.MopacOriginalStructure", parameters);
                 })
-                .thenCompose(t -> taskConsumer.waitTask(t.getId(), 5000))
+                .thenCompose(t -> taskConsumer.waitTask(t.getId(), TIMEOUT))
                 .thenCompose(t -> datasetConsumer.getDatasetById(t.getResult().split("dataset/")[1]));
     }
 
@@ -111,65 +112,62 @@ public class AmbitClientImpl implements AmbitClient {
         if (substanceOwner == null || substanceOwner.isEmpty()) {
             throw new AmbitClientException("Field substanceOwner cannot be empty.");
         }
-        final String[] bundleUri = new String[1];
-        final String[] bundle = new String[1];
 
-        CompletableFuture<AmbitTask> result = bundleConsumer.createBundle(bundleData.getDescription(), username, substanceOwner);
-        return result
-                .thenCompose(t -> taskConsumer.waitTask(t.getId(), 5000))
-                .thenCompose((t) -> {
-                    bundleUri[0] = t.getResult();
-                    bundle[0] = String.valueOf(bundleUri[0].split("bundle/")[1]);
-                    List<String> substances = bundleData.getSubstances();
-                    if (substances == null || substances.isEmpty()) {
-                        return substanceOwnerResourceConsumer.getOwnerSubstances(bundleData.getSubstanceOwner());
+        return bundleConsumer.createBundle(bundleData.getDescription(), username, substanceOwner)
+                .thenCompose(t -> taskConsumer.waitTask(t.getId(), TIMEOUT))
+                .thenApply(t -> {
+                    bundleData.setBundleUri(t.getResult());
+                    bundleData.setBundleId(t.getResult().split("bundle/")[1]);
+                    return bundleData;
+                })
+                .thenCompose((bd) -> {
+                    if (bd.getSubstances() == null || bd.getSubstances().isEmpty()) {
+                        return substanceOwnerResourceConsumer.getOwnerSubstances(bd.getSubstanceOwner());
                     }
-                    return CompletableFuture.completedFuture(null);
-                }).thenCompose((t) -> {
-            List<String> substances = bundleData.getSubstances() == null ? t : bundleData.getSubstances();
-            List<CompletableFuture<AmbitTask>> completableFutureList = new LinkedList<>();
-            for (String substance : substances) {
-                completableFutureList.add(bundleConsumer.putSubstanceByBundleId(bundle[0], substance).thenCompose(s -> taskConsumer.waitTask(s.getId(), 5000)));
-            }
-            return CompletableFuture.allOf((completableFutureList.toArray(new CompletableFuture[completableFutureList.size()])))
-                    .thenApply(v -> completableFutureList.stream()
-                    .map(CompletableFuture::join)
-                    );
-        }).thenCompose((t) -> {
-            Map<String, List<String>> properties = bundleData.getProperties();
-            if (properties == null || properties.isEmpty()) {
-                properties = new HashMap<>();
-                for (ProtocolCategory category : ProtocolCategory.values()) {
-                    String topCategoryName = category.getTopCategory();
-                    String categoryName = category.name();
-
-                    if (properties.containsKey(topCategoryName)) {
-                        List<String> categoryValues = properties.get(topCategoryName);
-                        categoryValues.add(categoryName);
-                        properties.put(topCategoryName, categoryValues);
-                    } else {
-                        List<String> categoryValues = new ArrayList<>();
-                        categoryValues.add(categoryName);
-                        properties.put(topCategoryName, categoryValues);
+                    return CompletableFuture.supplyAsync(() -> bd.getSubstances());
+                })
+                .thenApply((substances) -> {
+                    bundleData.setSubstances(substances);
+                    return bundleData;
+                })
+                .thenCompose((BundleData bd) -> {
+                    List<CompletableFuture<AmbitTask>> completableFutureList = new LinkedList<>();
+                    for (String substance : bd.getSubstances()) {
+                        completableFutureList.add(bundleConsumer.putSubstanceByBundleId(bd.getBundleId(), substance)
+                                .thenCompose(t -> taskConsumer.waitTask(t.getId(), TIMEOUT)));
                     }
-                }
-            }
-            List<CompletableFuture<AmbitTask>> completableFutureList = new LinkedList<>();
-            for (String topCategory : properties.keySet()) {
-                List<String> subCategories = properties.get(topCategory);
-                for (String subCategory : subCategories) {
-                    completableFutureList.add(bundleConsumer.putPropertyByBundleId(bundle[0], topCategory, subCategory).thenCompose(s -> taskConsumer.waitTask(s.getId(), 5000)));
-                }
-            }
-            return CompletableFuture.allOf((completableFutureList.toArray(new CompletableFuture[completableFutureList.size()])))
-                    .thenApply(v -> completableFutureList.stream()
-                    .map(CompletableFuture::join)
-                    );
-        }).thenCompose(
-                t -> {
-                    return CompletableFuture.completedFuture("Bundle succesffully created with id " + bundleUri[0]);
-                });
+                    return CompletableFuture.allOf((completableFutureList.toArray(new CompletableFuture[completableFutureList.size()])));
+                })
+                .thenCompose((Void v) -> {
+                    Map<String, List<String>> properties = bundleData.getProperties();
+                    if (properties == null || properties.isEmpty()) {
+                        properties = new HashMap<>();
+                        for (ProtocolCategory category : ProtocolCategory.values()) {
+                            String topCategoryName = category.getTopCategory();
+                            String categoryName = category.name();
 
+                            if (properties.containsKey(topCategoryName)) {
+                                List<String> categoryValues = properties.get(topCategoryName);
+                                categoryValues.add(categoryName);
+                                properties.put(topCategoryName, categoryValues);
+                            } else {
+                                List<String> categoryValues = new ArrayList<>();
+                                categoryValues.add(categoryName);
+                                properties.put(topCategoryName, categoryValues);
+                            }
+                        }
+                    }
+                    List<CompletableFuture<AmbitTask>> completableFutureList = new LinkedList<>();
+                    for (String topCategory : properties.keySet()) {
+                        List<String> subCategories = properties.get(topCategory);
+                        for (String subCategory : subCategories) {
+                            completableFutureList.add(bundleConsumer.putPropertyByBundleId(bundleData.getBundleId(), topCategory, subCategory)
+                                    .thenCompose(s -> taskConsumer.waitTask(s.getId(), TIMEOUT)));
+                        }
+                    }
+                    return CompletableFuture.allOf((completableFutureList.toArray(new CompletableFuture[completableFutureList.size()])));
+                })
+                .thenApply((Void v) -> bundleData.getBundleUri());
     }
 
     @Override
