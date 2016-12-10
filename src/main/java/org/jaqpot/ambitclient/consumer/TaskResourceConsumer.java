@@ -29,12 +29,12 @@
  */
 package org.jaqpot.ambitclient.consumer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jaqpot.ambitclient.model.dto.ambit.AmbitTask;
 import org.jaqpot.ambitclient.model.dto.ambit.AmbitTaskArray;
 import org.asynchttpclient.*;
 
 import java.util.concurrent.CompletableFuture;
+import org.jaqpot.ambitclient.serialize.Serializer;
 
 /**
  * @author Angelos Valsamis
@@ -49,8 +49,8 @@ public class TaskResourceConsumer extends BaseConsumer {
     private final String basePath;
     private final String taskByIdPath;
 
-    public TaskResourceConsumer(ObjectMapper mapper, AsyncHttpClient httpClient, String basePath) {
-        super(httpClient, mapper);
+    public TaskResourceConsumer(Serializer serializer, AsyncHttpClient httpClient, String basePath) {
+        super(httpClient, serializer);
         this.basePath = basePath;
         this.taskByIdPath = createPath(this.basePath, TASK_BY_ID);
     }

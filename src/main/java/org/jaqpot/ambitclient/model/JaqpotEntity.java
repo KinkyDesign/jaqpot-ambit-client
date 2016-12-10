@@ -27,16 +27,13 @@
  *   with the aforementioned licence.
  *
  */
-
 package org.jaqpot.ambitclient.model;
-
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import javax.xml.bind.annotation.XmlAttribute;
 
 /**
  *
@@ -45,7 +42,6 @@ import java.util.Set;
  *
  */
 @XmlRootElement
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public abstract class JaqpotEntity {
 
     /**
@@ -83,12 +79,12 @@ public abstract class JaqpotEntity {
         this.ontologicalClasses = other.ontologicalClasses != null ? new HashSet<>(other.ontologicalClasses) : null;
     }
 
-    @JsonProperty("_id")
+    @XmlAttribute(name = "_id")
     public String getId() {
         return id;
     }
 
-    @JsonProperty("_id")
+    @XmlAttribute(name = "_id")
     public void setId(String id) {
         this.id = id;
     }

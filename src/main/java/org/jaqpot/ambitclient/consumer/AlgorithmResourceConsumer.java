@@ -29,7 +29,6 @@
  */
 package org.jaqpot.ambitclient.consumer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jaqpot.ambitclient.model.dto.ambit.AmbitTask;
 import org.jaqpot.ambitclient.model.dto.ambit.AmbitTaskArray;
 import org.asynchttpclient.*;
@@ -37,6 +36,7 @@ import org.asynchttpclient.*;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import org.jaqpot.ambitclient.serialize.Serializer;
 
 /**
  * @author Angelos Valsamis
@@ -44,15 +44,13 @@ import java.util.concurrent.CompletableFuture;
  */
 public class AlgorithmResourceConsumer extends BaseConsumer {
 
-    private final String PATH = "https://apps.ideaconsult.net/enmtest/algorithm";
-
     private static final String ALGORITHM_BY_ID = "algorithm/%s";
 
     private final String basePath;
     private final String algorithmPath;
 
-    public AlgorithmResourceConsumer(ObjectMapper mapper, AsyncHttpClient httpClient, String basePath) {
-        super(httpClient, mapper);
+    public AlgorithmResourceConsumer(Serializer serializer, AsyncHttpClient httpClient, String basePath) {
+        super(httpClient, serializer);
         this.basePath = basePath;
         this.algorithmPath = createPath(this.basePath, ALGORITHM_BY_ID);
     }

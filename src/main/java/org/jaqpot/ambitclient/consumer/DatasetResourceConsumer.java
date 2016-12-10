@@ -29,7 +29,6 @@
  */
 package org.jaqpot.ambitclient.consumer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jaqpot.ambitclient.model.dataset.Dataset;
 import org.jaqpot.ambitclient.model.dto.ambit.AmbitTask;
 import org.asynchttpclient.*;
@@ -42,6 +41,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import org.asynchttpclient.request.body.multipart.Part;
 import org.jaqpot.ambitclient.model.dto.ambit.AmbitTaskArray;
+import org.jaqpot.ambitclient.serialize.Serializer;
 
 /**
  * @author Angelos Valsamis
@@ -58,12 +58,12 @@ public class DatasetResourceConsumer extends BaseConsumer {
     private final String datasetByIdPath;
     private final String structuresByIdPath;
 
-    public DatasetResourceConsumer(ObjectMapper mapper, AsyncHttpClient httpClient, String basePath) {
-        super(httpClient, mapper);
+    public DatasetResourceConsumer(Serializer serializer, AsyncHttpClient httpClient, String basePath) {
+        super(httpClient, serializer);
         this.basePath = basePath;
         this.datasetPath = createPath(this.basePath, DATASET);
         this.datasetByIdPath = createPath(this.basePath, DATASET_BY_ID);
-        this.structuresByIdPath = createPath(this.basePath, STRUCTURES_BY_ID);        
+        this.structuresByIdPath = createPath(this.basePath, STRUCTURES_BY_ID);
     }
 
     public CompletableFuture<Dataset> getDatasetById(String datasetId) {

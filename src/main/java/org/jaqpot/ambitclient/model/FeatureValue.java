@@ -29,8 +29,6 @@
  */
 package org.jaqpot.ambitclient.model;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -40,7 +38,6 @@ import javax.xml.bind.annotation.XmlRootElement;
  *
  */
 @XmlRootElement
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class FeatureValue extends JaqpotEntity {
 
     public FeatureValue() {

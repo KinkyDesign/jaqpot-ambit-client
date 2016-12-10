@@ -29,7 +29,6 @@
  */
 package org.jaqpot.ambitclient.model.dataset;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.jaqpot.ambitclient.model.JaqpotEntity;
 
 import javax.xml.bind.annotation.XmlRootElement;
@@ -43,7 +42,6 @@ import java.util.Set;
  *
  */
 @XmlRootElement
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class Dataset extends JaqpotEntity {
 
     public enum DescriptorCategory {
@@ -74,7 +72,7 @@ public class Dataset extends JaqpotEntity {
     }
 
     private String datasetURI;
-    
+
     private String byModel;
 
     private List<DataEntry> dataEntry;
@@ -146,6 +144,5 @@ public class Dataset extends JaqpotEntity {
     public String toString() {
         return "Dataset{" + "datasetURI=" + datasetURI + ", dataEntry=" + dataEntry + '}';
     }
-
 
 }

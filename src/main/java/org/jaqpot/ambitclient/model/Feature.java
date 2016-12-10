@@ -29,8 +29,6 @@
  */
 package org.jaqpot.ambitclient.model;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.HashSet;
 import java.util.Set;
@@ -44,7 +42,6 @@ import java.util.Set;
  *
  */
 @XmlRootElement
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Feature extends JaqpotEntity {
 
     /**

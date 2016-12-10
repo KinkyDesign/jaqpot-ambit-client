@@ -47,15 +47,12 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.logging.Logger;
 
 /**
  * @author Angelos Valsamis
  * @author Charalampos Chomenidis
  */
 public class AmbitClientImpl implements AmbitClient {
-
-    private static final Logger LOG = Logger.getLogger(AmbitClientImpl.class.getName());
 
     private static final String MOPAC_COMMANDS = "PM3 NOINTER MMOK BONDS MULLIK GNORM=1.0 T=30.00M";
 
@@ -124,53 +121,54 @@ public class AmbitClientImpl implements AmbitClient {
                     bundleUri[0] = t.getResult();
                     bundle[0] = String.valueOf(bundleUri[0].split("bundle/")[1]);
                     List<String> substances = bundleData.getSubstances();
-                    if (substances == null || substances.isEmpty())
+                    if (substances == null || substances.isEmpty()) {
                         return substanceOwnerResourceConsumer.getOwnerSubstances(bundleData.getSubstanceOwner());
+                    }
                     return CompletableFuture.completedFuture(null);
                 }).thenCompose((t) -> {
-                    List<String> substances = bundleData.getSubstances() == null ? t : bundleData.getSubstances();
-                    List<CompletableFuture<AmbitTask>> completableFutureList = new LinkedList<CompletableFuture<AmbitTask>>();
-                    for (String substance : substances) {
-                        completableFutureList.add(bundleConsumer.putSubstanceByBundleId(bundle[0], substance).thenCompose(s -> taskConsumer.waitTask(s.getId(), 5000)));
-                    }
-                    return CompletableFuture.allOf((completableFutureList.toArray(new CompletableFuture[completableFutureList.size()])))
-                            .thenApply(v -> completableFutureList.stream()
-                                    .map(CompletableFuture::join)
-                            );
-                }).thenCompose((t) -> {
-                    Map<String, List<String>> properties = bundleData.getProperties();
-                    if (properties == null || properties.isEmpty()) {
-                        properties = new HashMap<>();
-                        for (ProtocolCategory category : ProtocolCategory.values()) {
-                            String topCategoryName = category.getTopCategory();
-                            String categoryName = category.name();
+            List<String> substances = bundleData.getSubstances() == null ? t : bundleData.getSubstances();
+            List<CompletableFuture<AmbitTask>> completableFutureList = new LinkedList<>();
+            for (String substance : substances) {
+                completableFutureList.add(bundleConsumer.putSubstanceByBundleId(bundle[0], substance).thenCompose(s -> taskConsumer.waitTask(s.getId(), 5000)));
+            }
+            return CompletableFuture.allOf((completableFutureList.toArray(new CompletableFuture[completableFutureList.size()])))
+                    .thenApply(v -> completableFutureList.stream()
+                    .map(CompletableFuture::join)
+                    );
+        }).thenCompose((t) -> {
+            Map<String, List<String>> properties = bundleData.getProperties();
+            if (properties == null || properties.isEmpty()) {
+                properties = new HashMap<>();
+                for (ProtocolCategory category : ProtocolCategory.values()) {
+                    String topCategoryName = category.getTopCategory();
+                    String categoryName = category.name();
 
-                            if (properties.containsKey(topCategoryName)) {
-                                List<String> categoryValues = properties.get(topCategoryName);
-                                categoryValues.add(categoryName);
-                                properties.put(topCategoryName, categoryValues);
-                            } else {
-                                List<String> categoryValues = new ArrayList<>();
-                                categoryValues.add(categoryName);
-                                properties.put(topCategoryName, categoryValues);
-                            }
-                        }
+                    if (properties.containsKey(topCategoryName)) {
+                        List<String> categoryValues = properties.get(topCategoryName);
+                        categoryValues.add(categoryName);
+                        properties.put(topCategoryName, categoryValues);
+                    } else {
+                        List<String> categoryValues = new ArrayList<>();
+                        categoryValues.add(categoryName);
+                        properties.put(topCategoryName, categoryValues);
                     }
-                    List<CompletableFuture<AmbitTask>> completableFutureList = new LinkedList<CompletableFuture<AmbitTask>>();
-                    for (String topCategory : properties.keySet()) {
-                        List<String> subCategories = properties.get(topCategory);
-                        for (String subCategory : subCategories) {
-                            completableFutureList.add(bundleConsumer.putPropertyByBundleId(bundle[0], topCategory, subCategory).thenCompose(s -> taskConsumer.waitTask(s.getId(), 5000)));
-                        }
-                    }
-                    return CompletableFuture.allOf((completableFutureList.toArray(new CompletableFuture[completableFutureList.size()])))
-                            .thenApply(v -> completableFutureList.stream()
-                                    .map(CompletableFuture::join)
-                            );
-                }).thenCompose(
-                        t -> {
-                            return CompletableFuture.completedFuture("Bundle succesffully created with id " + bundleUri[0]);
-                        });
+                }
+            }
+            List<CompletableFuture<AmbitTask>> completableFutureList = new LinkedList<>();
+            for (String topCategory : properties.keySet()) {
+                List<String> subCategories = properties.get(topCategory);
+                for (String subCategory : subCategories) {
+                    completableFutureList.add(bundleConsumer.putPropertyByBundleId(bundle[0], topCategory, subCategory).thenCompose(s -> taskConsumer.waitTask(s.getId(), 5000)));
+                }
+            }
+            return CompletableFuture.allOf((completableFutureList.toArray(new CompletableFuture[completableFutureList.size()])))
+                    .thenApply(v -> completableFutureList.stream()
+                    .map(CompletableFuture::join)
+                    );
+        }).thenCompose(
+                t -> {
+                    return CompletableFuture.completedFuture("Bundle succesffully created with id " + bundleUri[0]);
+                });
 
     }
 

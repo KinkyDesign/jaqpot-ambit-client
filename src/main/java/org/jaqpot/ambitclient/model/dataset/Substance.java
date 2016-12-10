@@ -29,28 +29,22 @@
  */
 package org.jaqpot.ambitclient.model.dataset;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 /**
  *
  * @author Pantelis Sopasakis
  * @author Charalampos Chomenidis
  *
  */
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class Substance {
 
     String URI;
     String name;
     String ownerUUID;
 
-    @JsonProperty("URI")
     public String getURI() {
         return URI;
     }
 
-    @JsonProperty("URI")
     public void setURI(String URI) {
         this.URI = URI;
     }

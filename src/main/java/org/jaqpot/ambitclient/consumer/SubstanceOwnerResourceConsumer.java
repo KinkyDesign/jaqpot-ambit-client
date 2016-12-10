@@ -29,7 +29,6 @@
  */
 package org.jaqpot.ambitclient.consumer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -37,6 +36,7 @@ import java.util.stream.Collectors;
 import org.asynchttpclient.AsyncHttpClient;
 import org.jaqpot.ambitclient.model.dataset.Substance;
 import org.jaqpot.ambitclient.model.dto.bundle.BundleSubstances;
+import org.jaqpot.ambitclient.serialize.Serializer;
 
 /**
  * @author Angelos Valsamis
@@ -57,8 +57,8 @@ public class SubstanceOwnerResourceConsumer extends BaseConsumer {
     private final String ownerSubstancesByIdPath;
     private final String ownerStructuresByIdPath;
 
-    public SubstanceOwnerResourceConsumer(ObjectMapper mapper, AsyncHttpClient httpClient, String basePath) {
-        super(httpClient, mapper);
+    public SubstanceOwnerResourceConsumer(Serializer serializer, AsyncHttpClient httpClient, String basePath) {
+        super(httpClient, serializer);
         this.basePath = basePath;
         this.ownerPath = createPath(this.basePath, SUBSTANCEOWNER);
         this.ownerByIdPath = createPath(this.basePath, SUBSTANCEOWNER_BY_ID);
@@ -72,7 +72,7 @@ public class SubstanceOwnerResourceConsumer extends BaseConsumer {
         return get(path, BundleSubstances.class)
                 .thenApply(
                         (ta) -> {
-                            if (ta.getSubstance()!=null && !ta.getSubstance().isEmpty()){
+                            if (ta.getSubstance() != null && !ta.getSubstance().isEmpty()) {
                                 return ta.getSubstance()
                                         .stream()
                                         .map(Substance::getURI)

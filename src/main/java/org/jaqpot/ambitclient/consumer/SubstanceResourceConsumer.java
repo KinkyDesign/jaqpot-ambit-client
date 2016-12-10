@@ -29,11 +29,11 @@
  */
 package org.jaqpot.ambitclient.consumer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jaqpot.ambitclient.model.dto.study.Studies;
 import org.asynchttpclient.*;
 
 import java.util.concurrent.CompletableFuture;
+import org.jaqpot.ambitclient.serialize.Serializer;
 
 /**
  * @author Angelos Valsamis
@@ -41,14 +41,13 @@ import java.util.concurrent.CompletableFuture;
  */
 public class SubstanceResourceConsumer extends BaseConsumer {
 
-
     private final static String STUDY_BY_ID = "substance/%s/study";
 
     private final String basePath;
     private final String studyByIdPath;
 
-    public SubstanceResourceConsumer(ObjectMapper mapper, AsyncHttpClient httpClient, String basePath) {
-        super(httpClient, mapper);
+    public SubstanceResourceConsumer(Serializer serializer, AsyncHttpClient httpClient, String basePath) {
+        super(httpClient, serializer);
         this.basePath = basePath;
         this.studyByIdPath = createPath(this.basePath, STUDY_BY_ID);
     }

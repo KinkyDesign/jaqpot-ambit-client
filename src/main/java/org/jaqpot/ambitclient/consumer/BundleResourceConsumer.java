@@ -29,8 +29,6 @@
  */
 package org.jaqpot.ambitclient.consumer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -45,9 +43,9 @@ import java.util.concurrent.CompletableFuture;
 
 import org.jaqpot.ambitclient.model.dto.ambit.AmbitTask;
 import org.jaqpot.ambitclient.model.dto.ambit.AmbitTaskArray;
-
-import javax.ws.rs.core.MultivaluedHashMap;
-import javax.ws.rs.core.MultivaluedMap;
+import org.jaqpot.ambitclient.serialize.Serializer;
+import org.jaqpot.ambitclient.util.MultiValuedHashMap;
+import org.jaqpot.ambitclient.util.MultiValuedMap;
 
 /**
  * @author Angelos Valsamis
@@ -67,8 +65,8 @@ public class BundleResourceConsumer extends BaseConsumer {
     private final String bundleSubstancesByIdPath;
     private final String bundlePropertiesByIdPath;
 
-    public BundleResourceConsumer(ObjectMapper mapper, AsyncHttpClient httpClient, String basePath) {
-        super(httpClient, mapper);
+    public BundleResourceConsumer(Serializer serializer, AsyncHttpClient httpClient, String basePath) {
+        super(httpClient, serializer);
         this.basePath = basePath;
         this.bundlePath = createPath(this.basePath, BUNDLE);
         this.bundleByIdPath = createPath(this.basePath, BUNDLE_BY_ID);
@@ -91,25 +89,6 @@ public class BundleResourceConsumer extends BaseConsumer {
                 .thenApply((ta) -> ta.getTask().get(0));
     }
 
-    public CompletableFuture<AmbitTask> addSubstanceToBundle(String bundleId, String substanceUri) {
-        String path = String.format(bundleSubstancesByIdPath, bundleId);
-        Map<String, List<String>> parameters = new HashMap<>();
-        parameters.put("substance_uri", Arrays.asList(substanceUri));
-        parameters.put("command", Arrays.asList("add"));
-        return postForm(path, parameters, AmbitTaskArray.class)
-                .thenApply((ta) -> ta.getTask().get(0));
-    }
-
-    public CompletableFuture<AmbitTask> addPropertyToBundle(String bundleId, String topCategory, String endpointCategory) {
-        String path = String.format(bundlePropertiesByIdPath, bundleId);
-        Map<String, List<String>> parameters = new HashMap<>();
-        parameters.put("topcategory", Arrays.asList(topCategory));
-        parameters.put("endpointcategory", Arrays.asList(endpointCategory));
-        parameters.put("command", Arrays.asList("add"));
-        return postForm(path, parameters, AmbitTaskArray.class)
-                .thenApply((ta) -> ta.getTask().get(0));
-    }
-
     public CompletableFuture<BundleSubstances> getSubstancesByBundleId(String bundleId) {
         String path = String.format(bundleSubstancesByIdPath, bundleId);
         return get(path, BundleSubstances.class);
@@ -127,7 +106,7 @@ public class BundleResourceConsumer extends BaseConsumer {
 
     public CompletableFuture<AmbitTask> putSubstanceByBundleId(String bundleId, String substanceURI) {
         String path = String.format(bundleSubstancesByIdPath, bundleId);
-        MultivaluedMap<String, String> formParameters = new MultivaluedHashMap<>();
+        MultiValuedMap<String, String> formParameters = new MultiValuedHashMap<>();
         formParameters.putSingle("substance_uri", substanceURI);
         formParameters.putSingle("command", "add");
         return put(path, formParameters, AmbitTaskArray.class)
@@ -136,14 +115,13 @@ public class BundleResourceConsumer extends BaseConsumer {
 
     public CompletableFuture<AmbitTask> putPropertyByBundleId(String bundleId, String topCategory, String subCategory) {
         String path = String.format(bundlePropertiesByIdPath, bundleId);
-        MultivaluedMap<String, String> formParameters = new MultivaluedHashMap<>();
+        MultiValuedMap<String, String> formParameters = new MultiValuedHashMap<>();
         formParameters.putSingle("topcategory", topCategory);
         formParameters.putSingle("endpointcategory", subCategory);
         formParameters.putSingle("command", "add");
         return put(path, formParameters, AmbitTaskArray.class)
                 .thenApply((ta) -> ta.getTask().get(0));
     }
-
 
 //    public Object getBundleByJsonLD(String bundleId) {
 //
