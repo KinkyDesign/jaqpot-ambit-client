@@ -34,6 +34,7 @@ import org.jaqpot.ambitclient.model.dto.ambit.AmbitTaskArray;
 import org.asynchttpclient.*;
 
 import java.util.concurrent.CompletableFuture;
+import org.jaqpot.ambitclient.exception.AmbitClientException;
 import org.jaqpot.ambitclient.serialize.Serializer;
 
 /**
@@ -77,6 +78,11 @@ public class TaskResourceConsumer extends BaseConsumer {
                 return CompletableFuture.supplyAsync(() -> task);
             });
         }
-        return tf;
+        return tf.thenApply(task -> {
+            if (task.getStatus().equals("Running") || task.getStatus().equals("Queued")) {
+                throw new AmbitClientException("Timeout waiting for Ambit task:" + task.getId());
+            }
+            return task;
+        });
     }
 }
