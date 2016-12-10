@@ -32,6 +32,8 @@ package org.jaqpot.ambitclient.consumer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+
 import org.asynchttpclient.AsyncHttpClient;
 import org.jaqpot.ambitclient.model.dataset.Substance;
 import org.jaqpot.ambitclient.model.dto.bundle.BundleSubstances;
@@ -55,7 +57,7 @@ public class SubstanceOwnerResourceConsumer extends BaseConsumer {
     private final String ownerSubstancesByIdPath;
     private final String ownerStructuresByIdPath;
 
-    public SubstanceOwnerResourceConsumer(AsyncHttpClient httpClient, ObjectMapper mapper, String basePath) {
+    public SubstanceOwnerResourceConsumer(ObjectMapper mapper, AsyncHttpClient httpClient, String basePath) {
         super(httpClient, mapper);
         this.basePath = basePath;
         this.ownerPath = createPath(this.basePath, SUBSTANCEOWNER);
@@ -65,11 +67,19 @@ public class SubstanceOwnerResourceConsumer extends BaseConsumer {
         this.ownerStructuresByIdPath = createPath(this.basePath, SUBSTANCEOWNER_STRUCTURE_BY_ID);
     }
 
-    public CompletableFuture<List<Substance>> getOwnerSubstances(String ownerId) {
+    public CompletableFuture<List<String>> getOwnerSubstances(String ownerId) {
         String path = String.format(ownerSubstancesByIdPath, ownerId);
-
         return get(path, BundleSubstances.class)
-                .thenApply(bs -> bs.getSubstance());
+                .thenApply(
+                        (ta) -> {
+                            if (ta.getSubstance()!=null && !ta.getSubstance().isEmpty()){
+                                return ta.getSubstance()
+                                        .stream()
+                                        .map(Substance::getURI)
+                                        .collect(Collectors.toList());
+                            }
+                            return null;
+                        });
     }
 
 }

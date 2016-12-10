@@ -36,11 +36,8 @@ import org.asynchttpclient.DefaultAsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClientConfig;
 
 import java.util.logging.Logger;
-import org.jaqpot.ambitclient.consumer.AlgorithmResourceConsumer;
-import org.jaqpot.ambitclient.consumer.BundleResourceConsumer;
-import org.jaqpot.ambitclient.consumer.DatasetResourceConsumer;
-import org.jaqpot.ambitclient.consumer.SubstanceResourceConsumer;
-import org.jaqpot.ambitclient.consumer.TaskResourceConsumer;
+
+import org.jaqpot.ambitclient.consumer.*;
 
 /**
  * @author Angelos Valsamis
@@ -59,8 +56,8 @@ public class AmbitClientFactory {
         BundleResourceConsumer bundleConsumer = new BundleResourceConsumer(mapper, httpClient, basePath);
         SubstanceResourceConsumer substanceConsumer = new SubstanceResourceConsumer(mapper, httpClient, basePath);
         TaskResourceConsumer taskConsumer = new TaskResourceConsumer(mapper, httpClient, basePath);
-
-        AmbitClient client = new AmbitClientImpl(datasetConsumer, taskConsumer, algorithmConsumer, bundleConsumer, substanceConsumer, httpClient);
+        SubstanceOwnerResourceConsumer substanceOwnerResourceConsumer = new SubstanceOwnerResourceConsumer(mapper, httpClient, basePath);
+        AmbitClient client = new AmbitClientImpl(datasetConsumer, taskConsumer, algorithmConsumer, bundleConsumer, substanceConsumer, substanceOwnerResourceConsumer,  httpClient);
 
         return client;
     }

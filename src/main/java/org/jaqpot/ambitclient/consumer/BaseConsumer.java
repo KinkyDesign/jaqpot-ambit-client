@@ -151,20 +151,72 @@ public abstract class BaseConsumer {
         }).toCompletableFuture();
     }
 
+
+    public <T> CompletableFuture<T> put(String path, Map<String, List<String>> parameters, Class<T> c) {
+
+        CompletableFuture<T> future = httpClient
+                .preparePut(path)
+                .setFormParams(parameters)
+                .addHeader("Accept", "application/json")
+                .execute(new AsyncHandler<T>() {
+
+                    private InputStream sis;
+                    io.netty.handler.codec.http.HttpHeaders headers;
+
+                    @Override
+                    public AsyncHandler.State onStatusReceived(HttpResponseStatus status) throws Exception {
+                        int statusCode = status.getStatusCode();
+                        if (statusCode >= 400) {
+                            return AsyncHandler.State.ABORT;
+                        }
+                        return AsyncHandler.State.CONTINUE;
+                    }
+
+                    @Override
+                    public AsyncHandler.State onHeadersReceived(HttpResponseHeaders h) throws Exception {
+                        headers = h.getHeaders();
+                        return AsyncHandler.State.CONTINUE;
+                    }
+
+                    @Override
+                    public T onCompleted() throws Exception {
+                        return mapper.readValue(sis, c);
+                    }
+
+                    @Override
+                    public void onThrowable(Throwable t) {
+                        throw new AmbitClientException(t);
+                    }
+
+                    @Override
+                    public AsyncHandler.State onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
+                        if (sis == null) {
+                            sis = new ByteInputStream(httpResponseBodyPart.getBodyPartBytes(), httpResponseBodyPart.length());
+                        } else {
+                            sis = new SequenceInputStream(sis, new ByteInputStream(httpResponseBodyPart.getBodyPartBytes(), httpResponseBodyPart.length()));
+                        }
+                        return AsyncHandler.State.CONTINUE;
+                    }
+                }).toCompletableFuture();
+        return future;
+    }
+
     public <T> CompletableFuture<T> postForm(String path, Map<String, List<String>> parameters, Class<T> c) {
         return post(httpClient
-                .preparePost(path)
-                .setFormParams(parameters)
-                .addHeader("Accept", "application/json"),
+                        .preparePost(path)
+                        .setFormParams(parameters)
+                        .addHeader("Accept", "application/json"),
                 c
         );
     }
 
+
+
     public <T> CompletableFuture<T> postMultipart(String path, List<Part> bodyParts, Class<T> c) {
         return post(httpClient
-                .preparePost(path)
-                .setBodyParts(bodyParts)
-                .addHeader("Accept", "application/json"),
+                        .preparePost(path)
+                        .setBodyParts(bodyParts)
+                        .addHeader("Accept", "application/json"),
                 c
         );
     }

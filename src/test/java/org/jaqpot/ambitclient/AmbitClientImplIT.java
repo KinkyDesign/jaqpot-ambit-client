@@ -30,9 +30,16 @@
 package org.jaqpot.ambitclient;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+
+import org.jaqpot.ambitclient.model.BundleData;
 import org.jaqpot.ambitclient.model.dataset.Dataset;
+import org.jaqpot.ambitclient.model.dto.ambit.AmbitTask;
 import org.jaqpot.ambitclient.model.dto.bundle.BundleProperties;
 import org.jaqpot.ambitclient.model.dto.bundle.BundleSubstances;
 import org.jaqpot.ambitclient.model.dto.study.Studies;
@@ -124,6 +131,23 @@ public class AmbitClientImplIT {
         CompletableFuture<BundleProperties> result = client.getBundleProperties(bundleId);
         BundleProperties props = result.get();
         assertNotNull(props);
+    }
+
+
+    @org.junit.Test
+    public void testCreateBundle() throws InterruptedException, ExecutionException {
+        System.out.println("createBundle");
+        BundleData bundleData= new BundleData();
+        String username ="guest";
+        bundleData.setDescription("a bundle with protein corona data");
+        bundleData.setSubstanceOwner("CNLB-00B0A42C-3392-81F3-89F7-1F097956F48A");
+        HashMap<String,List<String>> props = new HashMap<>();
+        props.put("P-CHEM", Arrays.asList("PC_GRANULOMETRY_SECTION"));
+        bundleData.setProperties(props);
+        bundleData.setSubstances(null);
+        CompletableFuture<String> result = client.createBundle(bundleData, username);
+        String resultS = result.get();
+        assertNotNull(resultS);
     }
 
 }
