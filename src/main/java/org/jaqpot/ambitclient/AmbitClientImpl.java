@@ -76,7 +76,7 @@ public class AmbitClientImpl implements AmbitClient {
     }
 
     @Override
-    public CompletableFuture<Dataset> generateMopacDescriptors(String pdbFile) {
+    public CompletableFuture<Dataset> generateMopacDescriptors(String pdbFile, String subjectId) {
         byte[] file;
         if (pdbFile.startsWith("data:")) {
             String base64pdb = pdbFile.split(",")[1];
@@ -92,29 +92,29 @@ public class AmbitClientImpl implements AmbitClient {
             }
         }
 
-        CompletableFuture<AmbitTask> result = datasetConsumer.createDatasetByPDB(file);
+        CompletableFuture<AmbitTask> result = datasetConsumer.createDatasetByPDB(file, subjectId);
         return result
-                .thenCompose((t) -> taskConsumer.waitTask(t.getId(), TIMEOUT))
+                .thenCompose((t) -> taskConsumer.waitTask(t.getId(), TIMEOUT, subjectId))
                 .thenCompose((t) -> {
                     String datasetURI = t.getResult();
                     Map<String, List<String>> parameters = new HashMap<>();
                     parameters.put("dataset_uri", Arrays.asList(datasetURI));
                     parameters.put("mopac_commands", Arrays.asList(MOPAC_COMMANDS));
-                    return algorithmConsumer.train("ambit2.mopac.MopacOriginalStructure", parameters);
+                    return algorithmConsumer.train("ambit2.mopac.MopacOriginalStructure", parameters, subjectId);
                 })
-                .thenCompose(t -> taskConsumer.waitTask(t.getId(), TIMEOUT))
-                .thenCompose(t -> datasetConsumer.getDatasetById(t.getResult().split("dataset/")[1]));
+                .thenCompose(t -> taskConsumer.waitTask(t.getId(), TIMEOUT, subjectId))
+                .thenCompose(t -> datasetConsumer.getDatasetById(t.getResult().split("dataset/")[1], subjectId));
     }
 
     @Override
-    public CompletableFuture<String> createBundle(BundleData bundleData, String username) {
+    public CompletableFuture<String> createBundle(BundleData bundleData, String username, String subjectId) {
         String substanceOwner = bundleData.getSubstanceOwner();
         if (substanceOwner == null || substanceOwner.isEmpty()) {
             throw new AmbitClientException("Field substanceOwner cannot be empty.");
         }
 
-        return bundleConsumer.createBundle(bundleData.getDescription(), username, substanceOwner)
-                .thenCompose(t -> taskConsumer.waitTask(t.getId(), TIMEOUT))
+        return bundleConsumer.createBundle(bundleData.getDescription(), username, substanceOwner, subjectId)
+                .thenCompose(t -> taskConsumer.waitTask(t.getId(), TIMEOUT, subjectId))
                 .thenApply(t -> {
                     bundleData.setBundleUri(t.getResult());
                     bundleData.setBundleId(t.getResult().split("bundle/")[1]);
@@ -122,7 +122,7 @@ public class AmbitClientImpl implements AmbitClient {
                 })
                 .thenCompose((bd) -> {
                     if (bd.getSubstances() == null || bd.getSubstances().isEmpty()) {
-                        return substanceOwnerResourceConsumer.getOwnerSubstances(bd.getSubstanceOwner());
+                        return substanceOwnerResourceConsumer.getOwnerSubstances(bd.getSubstanceOwner(), subjectId);
                     }
                     return CompletableFuture.supplyAsync(() -> bd.getSubstances());
                 })
@@ -133,8 +133,8 @@ public class AmbitClientImpl implements AmbitClient {
                 .thenCompose((BundleData bd) -> {
                     List<CompletableFuture<AmbitTask>> completableFutureList = new LinkedList<>();
                     for (String substance : bd.getSubstances()) {
-                        completableFutureList.add(bundleConsumer.putSubstanceByBundleId(bd.getBundleId(), substance)
-                                .thenCompose(t -> taskConsumer.waitTask(t.getId(), TIMEOUT)));
+                        completableFutureList.add(bundleConsumer.putSubstanceByBundleId(bd.getBundleId(), substance, subjectId)
+                                .thenCompose(t -> taskConsumer.waitTask(t.getId(), TIMEOUT, subjectId)));
                     }
                     return CompletableFuture.allOf((completableFutureList.toArray(new CompletableFuture[completableFutureList.size()])));
                 })
@@ -161,8 +161,8 @@ public class AmbitClientImpl implements AmbitClient {
                     for (String topCategory : properties.keySet()) {
                         List<String> subCategories = properties.get(topCategory);
                         for (String subCategory : subCategories) {
-                            completableFutureList.add(bundleConsumer.putPropertyByBundleId(bundleData.getBundleId(), topCategory, subCategory)
-                                    .thenCompose(s -> taskConsumer.waitTask(s.getId(), TIMEOUT)));
+                            completableFutureList.add(bundleConsumer.putPropertyByBundleId(bundleData.getBundleId(), topCategory, subCategory, subjectId)
+                                    .thenCompose(s -> taskConsumer.waitTask(s.getId(), TIMEOUT, subjectId)));
                         }
                     }
                     return CompletableFuture.allOf((completableFutureList.toArray(new CompletableFuture[completableFutureList.size()])));
@@ -171,29 +171,29 @@ public class AmbitClientImpl implements AmbitClient {
     }
 
     @Override
-    public CompletableFuture<Dataset> getDataset(String datasetId) {
-        return datasetConsumer.getDatasetById(datasetId);
+    public CompletableFuture<Dataset> getDataset(String datasetId, String subjectId) {
+        return datasetConsumer.getDatasetById(datasetId, subjectId);
     }
 
     @Override
-    public CompletableFuture<Dataset> getDatasetStructures(String datasetId) {
-        return datasetConsumer.getStructuresByDatasetId(datasetId);
+    public CompletableFuture<Dataset> getDatasetStructures(String datasetId, String subjectId) {
+        return datasetConsumer.getStructuresByDatasetId(datasetId, subjectId);
     }
 
     @Override
-    public CompletableFuture<BundleSubstances> getBundleSubstances(String bundleId) {
-        return bundleConsumer.getSubstancesByBundleId(bundleId);
+    public CompletableFuture<BundleSubstances> getBundleSubstances(String bundleId, String subjectId) {
+        return bundleConsumer.getSubstancesByBundleId(bundleId, subjectId);
 
     }
 
     @Override
-    public CompletableFuture<Studies> getSubstanceStudies(String substanceId) {
-        return substanceConsumer.getStudiesBySubstanceId(substanceId);
+    public CompletableFuture<Studies> getSubstanceStudies(String substanceId, String subjectId) {
+        return substanceConsumer.getStudiesBySubstanceId(substanceId, subjectId);
     }
 
     @Override
-    public CompletableFuture<BundleProperties> getBundleProperties(String bundleId) {
-        return bundleConsumer.getPropertiesByBundleId(bundleId);
+    public CompletableFuture<BundleProperties> getBundleProperties(String bundleId, String subjectId) {
+        return bundleConsumer.getPropertiesByBundleId(bundleId, subjectId);
     }
 
     private byte[] inputStreamToByteArray(InputStream is) throws IOException {

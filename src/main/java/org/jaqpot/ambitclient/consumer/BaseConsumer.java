@@ -60,11 +60,12 @@ public abstract class BaseConsumer {
         this.serializer = serializer;
     }
 
-    public <T> CompletableFuture<T> get(String path, Class<T> c) {
+    public <T> CompletableFuture<T> get(String path, String subjectId, Class<T> c) {
 
         CompletableFuture<T> future = httpClient
                 .prepareGet(path)
                 .addHeader("Accept", "application/json")
+                .addHeader("subjectid", subjectId)
                 .execute(new AsyncHandler<T>() {
 
                     private InputStream sis;
@@ -151,12 +152,13 @@ public abstract class BaseConsumer {
         }).toCompletableFuture();
     }
 
-    public <T> CompletableFuture<T> put(String path, Map<String, List<String>> parameters, Class<T> c) {
+    public <T> CompletableFuture<T> put(String path, Map<String, List<String>> parameters, String subjectId, Class<T> c) {
 
         CompletableFuture<T> future = httpClient
                 .preparePut(path)
                 .setFormParams(parameters)
                 .addHeader("Accept", "application/json")
+                .addHeader("subjectid", subjectId)
                 .execute(new AsyncHandler<T>() {
 
                     private InputStream sis;
@@ -200,20 +202,22 @@ public abstract class BaseConsumer {
         return future;
     }
 
-    public <T> CompletableFuture<T> postForm(String path, Map<String, List<String>> parameters, Class<T> c) {
+    public <T> CompletableFuture<T> postForm(String path, Map<String, List<String>> parameters, String subjectId, Class<T> c) {
         return post(httpClient
                 .preparePost(path)
                 .setFormParams(parameters)
-                .addHeader("Accept", "application/json"),
+                .addHeader("Accept", "application/json")
+                .addHeader("subjectid", subjectId),
                 c
         );
     }
 
-    public <T> CompletableFuture<T> postMultipart(String path, List<Part> bodyParts, Class<T> c) {
+    public <T> CompletableFuture<T> postMultipart(String path, List<Part> bodyParts, String subjectId, Class<T> c) {
         return post(httpClient
                 .preparePost(path)
                 .setBodyParts(bodyParts)
-                .addHeader("Accept", "application/json"),
+                .addHeader("Accept", "application/json")
+                .addHeader("subjectid", subjectId),
                 c
         );
     }

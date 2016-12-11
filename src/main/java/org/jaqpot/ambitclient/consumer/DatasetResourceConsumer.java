@@ -66,23 +66,23 @@ public class DatasetResourceConsumer extends BaseConsumer {
         this.structuresByIdPath = createPath(this.basePath, STRUCTURES_BY_ID);
     }
 
-    public CompletableFuture<Dataset> getDatasetById(String datasetId) {
+    public CompletableFuture<Dataset> getDatasetById(String datasetId, String subjectId) {
         String path = String.format(datasetByIdPath, datasetId);
-        return get(path, Dataset.class);
+        return get(path, subjectId, Dataset.class);
     }
 
-    public CompletableFuture<AmbitTask> createDatasetByPDB(byte[] file) {
+    public CompletableFuture<AmbitTask> createDatasetByPDB(byte[] file, String subjectId) {
         String fileName = UUID.randomUUID().toString() + ".pdb";
         ByteArrayPart part = new ByteArrayPart("file", file, "octet-stream", Charset.defaultCharset(), fileName);
         List<Part> bodyParts = new ArrayList<>();
         bodyParts.add(part);
-        return postMultipart(datasetPath, bodyParts, AmbitTaskArray.class)
+        return postMultipart(datasetPath, bodyParts, subjectId, AmbitTaskArray.class)
                 .thenApply((ta) -> ta.getTask().get(0));
     }
 
-    public CompletableFuture<Dataset> getStructuresByDatasetId(String datasetId) {
+    public CompletableFuture<Dataset> getStructuresByDatasetId(String datasetId, String subjectId) {
         String path = String.format(structuresByIdPath, datasetId);
-        return get(path, Dataset.class);
+        return get(path, subjectId, Dataset.class);
     }
 
 }

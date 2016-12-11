@@ -58,6 +58,8 @@ public class AmbitClientImplIT {
 
     private static AmbitClient client;
 
+    private final String subjectId = "";
+
     public AmbitClientImplIT() {
     }
 
@@ -84,7 +86,7 @@ public class AmbitClientImplIT {
         System.out.println("generateMopacDescriptors");
         String pdbFile = "http://enanomapper.ntua.gr/pdbRepo/17002-ICSDNiO.pdb";
 
-        CompletableFuture<Dataset> result = client.generateMopacDescriptors(pdbFile);
+        CompletableFuture<Dataset> result = client.generateMopacDescriptors(pdbFile, subjectId);
         Dataset dataset = result.get();
         assertNotNull(dataset);
     }
@@ -93,7 +95,7 @@ public class AmbitClientImplIT {
     public void testGetDatasetById() throws InterruptedException, ExecutionException {
         System.out.println("getDatasetById");
         String datasetId = "1";
-        CompletableFuture<Dataset> result = client.getDataset(datasetId);
+        CompletableFuture<Dataset> result = client.getDataset(datasetId, subjectId);
         Dataset dataset = result.get();
         assertNotNull(dataset);
     }
@@ -102,7 +104,7 @@ public class AmbitClientImplIT {
     public void testGetStructuresByDatasetId() throws InterruptedException, ExecutionException {
         System.out.println("getDatasetStructuresById");
         String datasetId = "1";
-        CompletableFuture<Dataset> result = client.getDatasetStructures(datasetId);
+        CompletableFuture<Dataset> result = client.getDatasetStructures(datasetId, subjectId);
         Dataset dataset = result.get();
         assertNotNull(dataset);
     }
@@ -111,7 +113,7 @@ public class AmbitClientImplIT {
     public void testGetSubstances() throws InterruptedException, ExecutionException {
         System.out.println("getSubstances");
         String bundleId = "15";
-        CompletableFuture<BundleSubstances> result = client.getBundleSubstances(bundleId);
+        CompletableFuture<BundleSubstances> result = client.getBundleSubstances(bundleId, subjectId);
         BundleSubstances subs = result.get();
         assertNotNull(subs);
     }
@@ -120,7 +122,7 @@ public class AmbitClientImplIT {
     public void testGetStudiesBySubstanceId() throws InterruptedException, ExecutionException {
         System.out.println("getStudiesBySubstanceId");
         String substanceId = "CNLB-e9b74719-ce6b-80c5-3371-48d12725db03";
-        CompletableFuture<Studies> result = client.getSubstanceStudies(substanceId);
+        CompletableFuture<Studies> result = client.getSubstanceStudies(substanceId, subjectId);
         Studies studies = result.get();
         assertNotNull(studies);
     }
@@ -129,7 +131,7 @@ public class AmbitClientImplIT {
     public void testGetPropertiesByBundleId() throws InterruptedException, ExecutionException {
         System.out.println("getBundleProperties");
         String bundleId = "15";
-        CompletableFuture<BundleProperties> result = client.getBundleProperties(bundleId);
+        CompletableFuture<BundleProperties> result = client.getBundleProperties(bundleId, subjectId);
         BundleProperties props = result.get();
         assertNotNull(props);
     }
@@ -145,7 +147,7 @@ public class AmbitClientImplIT {
         props.put("P-CHEM", Arrays.asList("PC_GRANULOMETRY_SECTION"));
         bundleData.setProperties(props);
         bundleData.setSubstances(null);
-        CompletableFuture<String> result = client.createBundle(bundleData, username);
+        CompletableFuture<String> result = client.createBundle(bundleData, username, subjectId);
         String resultS = result.get();
         assertNotNull(resultS);
     }

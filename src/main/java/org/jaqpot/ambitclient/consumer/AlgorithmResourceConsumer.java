@@ -55,9 +55,9 @@ public class AlgorithmResourceConsumer extends BaseConsumer {
         this.algorithmPath = createPath(this.basePath, ALGORITHM_BY_ID);
     }
 
-    public CompletableFuture<AmbitTask> train(String algorithmId, Map<String, List<String>> parameters) {
+    public CompletableFuture<AmbitTask> train(String algorithmId, Map<String, List<String>> parameters, String subjectId) {
         String path = String.format(algorithmPath, algorithmId);
-        CompletableFuture<AmbitTaskArray> f = postForm(path, parameters, AmbitTaskArray.class);
+        CompletableFuture<AmbitTaskArray> f = postForm(path, parameters, subjectId, AmbitTaskArray.class);
         return f.thenApply((ta) -> ta.getTask().get(0));
     }
 }

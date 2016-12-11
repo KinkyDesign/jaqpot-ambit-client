@@ -56,21 +56,21 @@ public class TaskResourceConsumer extends BaseConsumer {
         this.taskByIdPath = createPath(this.basePath, TASK_BY_ID);
     }
 
-    public CompletableFuture<AmbitTask> getTask(String taskId) {
+    public CompletableFuture<AmbitTask> getTask(String taskId, String subjectId) {
         String path = String.format(taskByIdPath, taskId);
-        return get(path, AmbitTaskArray.class)
+        return get(path, subjectId, AmbitTaskArray.class)
                 .thenApply((ta) -> ta.getTask().get(0));
     }
 
-    public CompletableFuture<AmbitTask> waitTask(String taskId, long timeoutMillis) {
-        CompletableFuture<AmbitTask> tf = getTask(taskId);
+    public CompletableFuture<AmbitTask> waitTask(String taskId, long timeoutMillis, String subjectId) {
+        CompletableFuture<AmbitTask> tf = getTask(taskId, subjectId);
         int iterations = (int) (timeoutMillis / POLLING_INTERVAL_MILLIS);
         for (int i = 0; i < iterations; i++) {
             tf = tf.thenCompose(task -> {
                 try {
                     if (task.getStatus().equals("Running") || task.getStatus().equals("Queued")) {
                         Thread.sleep(POLLING_INTERVAL_MILLIS);
-                        return getTask(taskId);
+                        return getTask(taskId, subjectId);
                     }
                 } catch (InterruptedException ex) {
                     return CompletableFuture.supplyAsync(() -> task);

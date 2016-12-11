@@ -52,10 +52,10 @@ public class SubstanceResourceConsumer extends BaseConsumer {
         this.studyByIdPath = createPath(this.basePath, STUDY_BY_ID);
     }
 
-    public CompletableFuture<Studies> getStudiesBySubstanceId(String substanceId) {
+    public CompletableFuture<Studies> getStudiesBySubstanceId(String substanceId, String subjectId) {
         String path = String.format(studyByIdPath, substanceId);
 
-        return get(path, Studies.class);
+        return get(path, subjectId, Studies.class);
     }
 
 }

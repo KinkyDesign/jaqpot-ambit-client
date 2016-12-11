@@ -74,7 +74,7 @@ public class BundleResourceConsumer extends BaseConsumer {
         this.bundlePropertiesByIdPath = createPath(this.basePath, BUNDLE_PROPERTIES_BY_ID);
     }
 
-    public CompletableFuture<AmbitTask> createBundle(String description, String userName, String substanceOwner) {
+    public CompletableFuture<AmbitTask> createBundle(String description, String userName, String substanceOwner, String subjectId) {
         String path = bundlePath;
         Map<String, List<String>> parameters = new HashMap<>();
         parameters.put("title", Arrays.asList("owner-bundle"));
@@ -85,41 +85,41 @@ public class BundleResourceConsumer extends BaseConsumer {
         parameters.put("rightsHolder", Arrays.asList(userName));
         parameters.put("maintainer", Arrays.asList(userName));
         parameters.put("stars", Arrays.asList("1"));
-        return postForm(path, parameters, AmbitTaskArray.class)
+        return postForm(path, parameters, subjectId, AmbitTaskArray.class)
                 .thenApply((ta) -> ta.getTask().get(0));
     }
 
-    public CompletableFuture<BundleSubstances> getSubstancesByBundleId(String bundleId) {
+    public CompletableFuture<BundleSubstances> getSubstancesByBundleId(String bundleId, String subjectId) {
         String path = String.format(bundleSubstancesByIdPath, bundleId);
-        return get(path, BundleSubstances.class);
+        return get(path, subjectId, BundleSubstances.class);
     }
 
-    public CompletableFuture<BundleProperties> getPropertiesByBundleId(String bundleId) {
+    public CompletableFuture<BundleProperties> getPropertiesByBundleId(String bundleId, String subjectId) {
         String path = String.format(bundlePropertiesByIdPath, bundleId);
-        return get(path, BundleProperties.class);
+        return get(path, subjectId, BundleProperties.class);
     }
 
-    public CompletableFuture<BundleData> getBundleById(String bundleId) {
+    public CompletableFuture<BundleData> getBundleById(String bundleId, String subjectId) {
         String path = String.format(bundleByIdPath, bundleId);
-        return get(path, BundleData.class);
+        return get(path, subjectId, BundleData.class);
     }
 
-    public CompletableFuture<AmbitTask> putSubstanceByBundleId(String bundleId, String substanceURI) {
+    public CompletableFuture<AmbitTask> putSubstanceByBundleId(String bundleId, String substanceURI, String subjectId) {
         String path = String.format(bundleSubstancesByIdPath, bundleId);
         MultiValuedMap<String, String> formParameters = new MultiValuedHashMap<>();
         formParameters.putSingle("substance_uri", substanceURI);
         formParameters.putSingle("command", "add");
-        return put(path, formParameters, AmbitTaskArray.class)
+        return put(path, formParameters, subjectId, AmbitTaskArray.class)
                 .thenApply((ta) -> ta.getTask().get(0));
     }
 
-    public CompletableFuture<AmbitTask> putPropertyByBundleId(String bundleId, String topCategory, String subCategory) {
+    public CompletableFuture<AmbitTask> putPropertyByBundleId(String bundleId, String topCategory, String subCategory, String subjectId) {
         String path = String.format(bundlePropertiesByIdPath, bundleId);
         MultiValuedMap<String, String> formParameters = new MultiValuedHashMap<>();
         formParameters.putSingle("topcategory", topCategory);
         formParameters.putSingle("endpointcategory", subCategory);
         formParameters.putSingle("command", "add");
-        return put(path, formParameters, AmbitTaskArray.class)
+        return put(path, formParameters, subjectId, AmbitTaskArray.class)
                 .thenApply((ta) -> ta.getTask().get(0));
     }
 

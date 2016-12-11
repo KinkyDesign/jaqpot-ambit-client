@@ -67,9 +67,9 @@ public class SubstanceOwnerResourceConsumer extends BaseConsumer {
         this.ownerStructuresByIdPath = createPath(this.basePath, SUBSTANCEOWNER_STRUCTURE_BY_ID);
     }
 
-    public CompletableFuture<List<String>> getOwnerSubstances(String ownerId) {
+    public CompletableFuture<List<String>> getOwnerSubstances(String ownerId, String subjectId) {
         String path = String.format(ownerSubstancesByIdPath, ownerId);
-        return get(path, BundleSubstances.class)
+        return get(path, subjectId, BundleSubstances.class)
                 .thenApply((ta) -> {
                     if (ta.getSubstance() != null && !ta.getSubstance().isEmpty()) {
                         return ta.getSubstance()
