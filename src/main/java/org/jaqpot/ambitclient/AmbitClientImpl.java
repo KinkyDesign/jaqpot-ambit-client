@@ -29,110 +29,174 @@
  */
 package org.jaqpot.ambitclient;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import org.jaqpot.ambitclient.consumer.DatasetResourceConsumer;
-import org.jaqpot.ambitclient.consumer.SubstanceResourceConsumer;
-import org.jaqpot.ambitclient.consumer.BundleResourceConsumer;
-import org.jaqpot.ambitclient.consumer.AlgorithmResourceConsumer;
-import org.jaqpot.ambitclient.consumer.TaskResourceConsumer;
+import org.asynchttpclient.AsyncHttpClient;
+import org.jaqpot.ambitclient.consumer.*;
+import org.jaqpot.ambitclient.exception.AmbitClientException;
+import org.jaqpot.ambitclient.model.BundleData;
 import org.jaqpot.ambitclient.model.dataset.Dataset;
 import org.jaqpot.ambitclient.model.dto.ambit.AmbitTask;
+import org.jaqpot.ambitclient.model.dto.ambit.ProtocolCategory;
 import org.jaqpot.ambitclient.model.dto.bundle.BundleProperties;
 import org.jaqpot.ambitclient.model.dto.bundle.BundleSubstances;
 import org.jaqpot.ambitclient.model.dto.study.Studies;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.logging.Logger;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 /**
- * Created by Angelos Valsamis on 20/10/2016.
+ * @author Angelos Valsamis
+ * @author Charalampos Chomenidis
  */
 public class AmbitClientImpl implements AmbitClient {
 
-    private static final Logger LOG = Logger.getLogger(AmbitClientImpl.class.getName());
+    private static final String MOPAC_COMMANDS = "PM3 NOINTER MMOK BONDS MULLIK GNORM=1.0 T=30.00M";
+    private static final long TIMEOUT = 5000L;
 
     private final DatasetResourceConsumer datasetConsumer;
     private final TaskResourceConsumer taskConsumer;
     private final AlgorithmResourceConsumer algorithmConsumer;
     private final BundleResourceConsumer bundleConsumer;
     private final SubstanceResourceConsumer substanceConsumer;
+    private final SubstanceOwnerResourceConsumer substanceOwnerResourceConsumer;
+    private final AsyncHttpClient client;
 
-    public AmbitClientImpl(DatasetResourceConsumer datasetConsumer, TaskResourceConsumer taskConsumer, AlgorithmResourceConsumer algorithmConsumer, BundleResourceConsumer bundleConsumer, SubstanceResourceConsumer substanceConsumer) {
+    public AmbitClientImpl(DatasetResourceConsumer datasetConsumer, TaskResourceConsumer taskConsumer, AlgorithmResourceConsumer algorithmConsumer, BundleResourceConsumer bundleConsumer, SubstanceResourceConsumer substanceConsumer, SubstanceOwnerResourceConsumer substanceOwnerResourceConsumer, AsyncHttpClient client) {
         this.datasetConsumer = datasetConsumer;
         this.taskConsumer = taskConsumer;
         this.algorithmConsumer = algorithmConsumer;
         this.bundleConsumer = bundleConsumer;
         this.substanceConsumer = substanceConsumer;
+        this.substanceOwnerResourceConsumer = substanceOwnerResourceConsumer;
+        this.client = client;
     }
 
     @Override
-    public Dataset createMopacDataset(String pdbFile, String options) {
-        URL pdbURL = null;
-        byte[] file = new byte[0];
-
-        try {
-            pdbURL = new URL(pdbFile);//"http://enanomapper.ntua.gr/pdbRepo/17002-ICSDNiO.pdb"
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-        try {
-            file = InputStreamToByteArray(pdbURL.openStream());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        AmbitTask result = datasetConsumer.createDatasetByPDB(file);
-
-        while (result.getStatus().equals("Running") || result.getStatus().equals("Queued")) {
-            result = taskConsumer.getTask(result.getId());
+    public CompletableFuture<Dataset> generateMopacDescriptors(String pdbFile, String subjectId) {
+        byte[] file;
+        if (pdbFile.startsWith("data:")) {
+            String base64pdb = pdbFile.split(",")[1];
+            file = Base64.getDecoder().decode(base64pdb.getBytes());
+        } else {
+            try {
+                URL pdbURL = new URL(pdbFile);
+                file = inputStreamToByteArray(pdbURL.openStream());
+            } catch (MalformedURLException ex) {
+                throw new AmbitClientException("Invalid .pdb file url", ex);
+            } catch (IOException ex) {
+                throw new AmbitClientException("IO Error when trying to download .pdb file", ex);
+            }
         }
 
-        result = algorithmConsumer.mopacOriginalStructure(result.getResult(), options); //"PM3 NOINTER MMOK BONDS MULLIK GNORM=1.0 T=30.00M"
+        CompletableFuture<AmbitTask> result = datasetConsumer.createDatasetByPDB(file, subjectId);
+        return result
+                .thenCompose((t) -> taskConsumer.waitTask(t.getId(), TIMEOUT, subjectId))
+                .thenCompose((t) -> {
+                    String datasetURI = t.getResult();
+                    Map<String, List<String>> parameters = new HashMap<>();
+                    parameters.put("dataset_uri", Arrays.asList(datasetURI));
+                    parameters.put("mopac_commands", Arrays.asList(MOPAC_COMMANDS));
+                    return algorithmConsumer.train("ambit2.mopac.MopacOriginalStructure", parameters, subjectId);
+                })
+                .thenCompose(t -> taskConsumer.waitTask(t.getId(), TIMEOUT, subjectId))
+                .thenCompose(t -> datasetConsumer.getDatasetById(t.getResult().split("dataset/")[1], subjectId));
+    }
 
-        while (result.getStatus().equals("Running") || result.getStatus().equals("Queued")) {
-            result = taskConsumer.getTask(result.getId());
+    @Override
+    public CompletableFuture<String> createBundle(BundleData bundleData, String username, String subjectId) {
+        String substanceOwner = bundleData.getSubstanceOwner();
+        if (substanceOwner == null || substanceOwner.isEmpty()) {
+            throw new AmbitClientException("Field substanceOwner cannot be empty.");
         }
 
-        return datasetConsumer.getDatasetById(result.getResult().split("dataset/")[1]);
+        return bundleConsumer.createBundle(bundleData.getDescription(), username, substanceOwner, subjectId)
+                .thenCompose(t -> taskConsumer.waitTask(t.getId(), TIMEOUT, subjectId))
+                .thenApply(t -> {
+                    bundleData.setBundleUri(t.getResult());
+                    bundleData.setBundleId(t.getResult().split("bundle/")[1]);
+                    return bundleData;
+                })
+                .thenCompose((bd) -> {
+                    if (bd.getSubstances() == null || bd.getSubstances().isEmpty()) {
+                        return substanceOwnerResourceConsumer.getOwnerSubstances(bd.getSubstanceOwner(), subjectId);
+                    }
+                    return CompletableFuture.supplyAsync(() -> bd.getSubstances());
+                })
+                .thenApply((substances) -> {
+                    bundleData.setSubstances(substances);
+                    return bundleData;
+                })
+                .thenCompose((BundleData bd) -> {
+                    List<CompletableFuture<AmbitTask>> completableFutureList = new LinkedList<>();
+                    for (String substance : bd.getSubstances()) {
+                        completableFutureList.add(bundleConsumer.putSubstanceByBundleId(bd.getBundleId(), substance, subjectId)
+                                .thenCompose(t -> taskConsumer.waitTask(t.getId(), TIMEOUT, subjectId)));
+                    }
+                    return CompletableFuture.allOf((completableFutureList.toArray(new CompletableFuture[completableFutureList.size()])));
+                })
+                .thenCompose((Void v) -> {
+                    Map<String, List<String>> properties = bundleData.getProperties();
+                    if (properties == null || properties.isEmpty()) {
+                        properties = new HashMap<>();
+                        for (ProtocolCategory category : ProtocolCategory.values()) {
+                            String topCategoryName = category.getTopCategory();
+                            String categoryName = category.name();
+
+                            if (properties.containsKey(topCategoryName)) {
+                                List<String> categoryValues = properties.get(topCategoryName);
+                                categoryValues.add(categoryName);
+                                properties.put(topCategoryName, categoryValues);
+                            } else {
+                                List<String> categoryValues = new ArrayList<>();
+                                categoryValues.add(categoryName);
+                                properties.put(topCategoryName, categoryValues);
+                            }
+                        }
+                    }
+                    List<CompletableFuture<AmbitTask>> completableFutureList = new LinkedList<>();
+                    for (String topCategory : properties.keySet()) {
+                        List<String> subCategories = properties.get(topCategory);
+                        for (String subCategory : subCategories) {
+                            completableFutureList.add(bundleConsumer.putPropertyByBundleId(bundleData.getBundleId(), topCategory, subCategory, subjectId)
+                                    .thenCompose(s -> taskConsumer.waitTask(s.getId(), TIMEOUT, subjectId)));
+                        }
+                    }
+                    return CompletableFuture.allOf((completableFutureList.toArray(new CompletableFuture[completableFutureList.size()])));
+                })
+                .thenApply((Void v) -> bundleData.getBundleUri());
+    }
+
+    @Override
+    public CompletableFuture<Dataset> getDataset(String datasetId, String subjectId) {
+        return datasetConsumer.getDatasetById(datasetId, subjectId);
+    }
+
+    @Override
+    public CompletableFuture<Dataset> getDatasetStructures(String datasetId, String subjectId) {
+        return datasetConsumer.getStructuresByDatasetId(datasetId, subjectId);
+    }
+
+    @Override
+    public CompletableFuture<BundleSubstances> getBundleSubstances(String bundleId, String subjectId) {
+        return bundleConsumer.getSubstancesByBundleId(bundleId, subjectId);
 
     }
 
     @Override
-    public Dataset getStructuresByDatasetId(String datasetId) {
-        return datasetConsumer.getStructuresByDatasetId(datasetId);
+    public CompletableFuture<Studies> getSubstanceStudies(String substanceId, String subjectId) {
+        return substanceConsumer.getStudiesBySubstanceId(substanceId, subjectId);
     }
 
     @Override
-    public Dataset createDatasetByPDB(byte[] file) {
-        AmbitTask result = datasetConsumer.createDatasetByPDB(file);
-
-        while (result.getStatus().equals("Running") || result.getStatus().equals("Queued")) {
-            result = taskConsumer.getTask(result.getId());
-        }
-        return datasetConsumer.getDatasetById(result.getResult().split("dataset/")[1]);
+    public CompletableFuture<BundleProperties> getBundleProperties(String bundleId, String subjectId) {
+        return bundleConsumer.getPropertiesByBundleId(bundleId, subjectId);
     }
 
-    @Override
-    public BundleSubstances getSubstances(String bundleId) {
-        return bundleConsumer.getSubstancesByBundleId(bundleId);
-
-    }
-
-    @Override
-    public Studies getStudiesBySubstanceId(String substanceId) {
-        return substanceConsumer.getStudiesBySubstanceId(substanceId);
-    }
-
-    @Override
-    public BundleProperties getPropertiesByBundleId(String bundleId) {
-        return bundleConsumer.getPropertiesByBundleId(bundleId);
-    }
-
-    private byte[] InputStreamToByteArray(InputStream is) throws IOException {
+    private byte[] inputStreamToByteArray(InputStream is) throws IOException {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 
         int nRead;
@@ -145,5 +209,10 @@ public class AmbitClientImpl implements AmbitClient {
         buffer.flush();
 
         return buffer.toByteArray();
+    }
+
+    @Override
+    public void close() throws IOException {
+        this.client.close();
     }
 }

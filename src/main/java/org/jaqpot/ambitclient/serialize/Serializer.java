@@ -27,40 +27,25 @@
  *   with the aforementioned licence.
  *
  */
+package org.jaqpot.ambitclient.serialize;
 
- /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package org.jaqpot.ambitclient.model.dto.bundle;
-
-import org.jaqpot.ambitclient.model.dataset.Substance;
-
-import java.util.List;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Writer;
 
 /**
- *
- * @author Pantelis Sopasakis
+ * @author Angelos Valsamis
  * @author Charalampos Chomenidis
- *
  */
-public class BundleSubstances {
+public interface Serializer {
 
-    List<Substance> substance;
+    public void write(Object entity, OutputStream out);
 
-    public List<Substance> getSubstance() {
-        return substance;
-    }
+    public void write(Object entity, Writer writer);
 
-    public void setSubstance(List<Substance> substance) {
-        this.substance = substance;
-    }
+    public String write(Object entity);
 
-    @Override
-    public String toString() {
-        return "BundleSubstances{"
-                + "substance=" + substance
-                + '}';
-    }
+    public <T> T parse(String content, Class<T> valueType);
+
+    public <T> T parse(InputStream src, Class<T> valueType);
 }

@@ -29,8 +29,7 @@
  */
 package org.jaqpot.ambitclient.model.dataset;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import javax.xml.bind.annotation.XmlElement;
 
 /**
  *
@@ -38,19 +37,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Charalampos Chomenidis
  *
  */
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class Substance {
 
+    @XmlElement(name = "URI")
     String URI;
     String name;
     String ownerUUID;
 
-    @JsonProperty("URI")
+    @XmlElement(name = "URI")
     public String getURI() {
         return URI;
     }
 
-    @JsonProperty("URI")
+    @XmlElement(name = "URI")
     public void setURI(String URI) {
         this.URI = URI;
     }

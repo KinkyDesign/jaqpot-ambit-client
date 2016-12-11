@@ -29,258 +29,198 @@
  */
 package org.jaqpot.ambitclient.consumer;
 
-import org.jaqpot.ambitclient.AmbitClientFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.jsonldjava.core.JsonLdOptions;
-import com.github.jsonldjava.core.JsonLdProcessor;
-import com.github.jsonldjava.utils.JsonUtils;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.jaqpot.ambitclient.model.BundleData;
 import org.jaqpot.ambitclient.model.dto.bundle.BundleProperties;
 import org.jaqpot.ambitclient.model.dto.bundle.BundleSubstances;
 import org.asynchttpclient.*;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
+
+import org.jaqpot.ambitclient.model.dto.ambit.AmbitTask;
+import org.jaqpot.ambitclient.model.dto.ambit.AmbitTaskArray;
+import org.jaqpot.ambitclient.serialize.Serializer;
+import org.jaqpot.ambitclient.util.MultiValuedHashMap;
+import org.jaqpot.ambitclient.util.MultiValuedMap;
 
 /**
- * Created by Angelos Valsamis on 13/10/2016.
+ * @author Angelos Valsamis
+ * @author Charalampos Chomenidis
  */
-public class BundleResourceConsumer {
+public class BundleResourceConsumer extends BaseConsumer {
 
-    String PATH = "https://apps.ideaconsult.net/enmtest/bundle";
+    private static final String BUNDLE = "bundle";
+    private static final String BUNDLE_BY_ID = "bundle/%s";
 
-    private final ObjectMapper mapper;
-    private final AsyncHttpClient httpClient;
+    private static final String BUNDLE_SUBSTANCES_BY_ID = "bundle/%s/substance";
+    private static final String BUNDLE_PROPERTIES_BY_ID = "bundle/%s/property";
 
-    public BundleResourceConsumer(ObjectMapper mapper, AsyncHttpClient httpClient) {
-        this.mapper = mapper;
-        this.httpClient = httpClient;
+    private final String basePath;
+    private final String bundlePath;
+    private final String bundleByIdPath;
+    private final String bundleSubstancesByIdPath;
+    private final String bundlePropertiesByIdPath;
+
+    public BundleResourceConsumer(Serializer serializer, AsyncHttpClient httpClient, String basePath) {
+        super(httpClient, serializer);
+        this.basePath = basePath;
+        this.bundlePath = createPath(this.basePath, BUNDLE);
+        this.bundleByIdPath = createPath(this.basePath, BUNDLE_BY_ID);
+        this.bundleSubstancesByIdPath = createPath(this.basePath, BUNDLE_SUBSTANCES_BY_ID);
+        this.bundlePropertiesByIdPath = createPath(this.basePath, BUNDLE_PROPERTIES_BY_ID);
     }
 
-    public BundleSubstances getSubstancesByBundleId(String bundleId) {
-
-        BundleSubstances result = null;
-
-        Future<BundleSubstances> f = httpClient
-                .prepareGet(PATH + "/" + bundleId + "/substance")
-                .addHeader("Accept", "application/json")
-                .execute(new AsyncHandler<BundleSubstances>() {
-
-                    private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                    io.netty.handler.codec.http.HttpHeaders headers;
-
-                    @Override
-                    public State onStatusReceived(HttpResponseStatus status) throws Exception {
-                        int statusCode = status.getStatusCode();
-                        // The Status have been read
-                        // If you don't want to read the headers,body or stop processing the response
-                        if (statusCode >= 500) {
-                            return AsyncHandler.State.ABORT;
-                        }
-                        return State.CONTINUE;
-                    }
-
-                    @Override
-                    public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
-                        headers = h.getHeaders();
-                        // The headers have been read
-                        // If you don't want to read the body, or stop processing the response
-                        return State.CONTINUE;
-                    }
-
-                    @Override
-                    public BundleSubstances onCompleted() throws Exception {
-                        // Will be invoked once the response has been fully read or a ResponseComplete exception
-                        // has been thrown.
-                        // NOTE: should probably use Content-Encoding from headers
-                        bytes.flush();
-                        return mapper.readValue(bytes.toByteArray(), BundleSubstances.class);
-                    }
-
-                    @Override
-                    public void onThrowable(Throwable t) {
-                    }
-
-                    @Override
-                    public State onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
-                        bytes.write(httpResponseBodyPart.getBodyPartBytes());
-                        bytes.flush();
-                        return State.CONTINUE;
-                    }
-                });
-
-        try {
-            result = f.get();
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-        return result;
+    public CompletableFuture<AmbitTask> createBundle(String description, String userName, String substanceOwner, String subjectId) {
+        String path = bundlePath;
+        Map<String, List<String>> parameters = new HashMap<>();
+        parameters.put("title", Arrays.asList("owner-bundle"));
+        parameters.put("description", Arrays.asList(description));
+        parameters.put("source", Arrays.asList(userName));
+        parameters.put("seeAlso", Arrays.asList(substanceOwner));
+        parameters.put("license", Arrays.asList("Copyright of " + userName));
+        parameters.put("rightsHolder", Arrays.asList(userName));
+        parameters.put("maintainer", Arrays.asList(userName));
+        parameters.put("stars", Arrays.asList("1"));
+        return postForm(path, parameters, subjectId, AmbitTaskArray.class)
+                .thenApply((ta) -> ta.getTask().get(0));
     }
 
-    public Object getBundleByJsonLD(String bundleId) {
-
-        BundleSubstances result = null;
-
-        Future<Object> f = httpClient
-                .prepareGet(PATH + "/" + bundleId + "/substance")
-                .addHeader("Accept", "application/ld+json")
-                .execute(new AsyncHandler<Object>() {
-
-                    private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                    io.netty.handler.codec.http.HttpHeaders headers;
-
-                    @Override
-                    public State onStatusReceived(HttpResponseStatus status) throws Exception {
-                        int statusCode = status.getStatusCode();
-                        // The Status have been read
-                        // If you don't want to read the headers,body or stop processing the response
-                        if (statusCode >= 500) {
-                            return AsyncHandler.State.ABORT;
-                        }
-                        return State.CONTINUE;
-                    }
-
-                    @Override
-                    public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
-                        headers = h.getHeaders();
-                        // The headers have been read
-                        // If you don't want to read the body, or stop processing the response
-                        return State.CONTINUE;
-                    }
-
-                    @Override
-                    public Object onCompleted() throws Exception {
-                        // Will be invoked once the response has been fully read or a ResponseComplete exception
-                        // has been thrown.
-                        // NOTE: should probably use Content-Encoding from headers
-                        bytes.flush();
-                        //System.out.println(bytes.toString());
-                        InputStream inputStream = new ByteArrayInputStream(bytes.toByteArray());
-
-                        Object jsonObject = JsonUtils.fromInputStream(inputStream);
-                        Map<String, String> context = new HashMap<String, String>();
-                        context.put("sso", "http://semanticscience.org/resource_consumers/");
-                        context.put("otee", "http://www.opentox.org/echaEndpoints.owl#");
-                        context.put("bx", "http://purl.org/net/nknouf/ns/bibtex#");
-                        context.put("npo", "http://purl.bioontology.org/ontology/npo#");
-                        context.put("dcterms", "http://purl.org/dc/terms/");
-                        context.put("rdfs", "http://www.w3.org/2000/01/rdf-schema#");
-                        context.put("substance", "https://apps.ideaconsult.net/data/substance/");
-                        context.put("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
-                        context.put("ot", "http://www.opentox.org/api/1.1#");
-                        context.put("dc", "http://purl.org/dc/elements/1.1/");
-                        context.put("enm", "http://purl.enanomapper.org/onto/");
-                        context.put("foaf", "http://xmlns.com/foaf/0.1/");
-                        context.put("ota", "http://www.opentox.org/algorithmTypes.owl#");
-                        context.put("as", "https://apps.ideaconsult.net/data/assay/");
-                        context.put("void", "http://rdfs.org/ns/void#");
-                        context.put("mgroup", "https://apps.ideaconsult.net/data/measuregroup/");
-                        context.put("obo", "http://purl.obolibrary.org/obo/");
-                        context.put("ap", "https://apps.ideaconsult.net/data/protocol/");
-                        context.put("am", "https://apps.ideaconsult.net/data/model/");
-                        context.put("sio", "http://semanticscience.org/resource_consumers/");
-                        context.put("ac", "https://apps.ideaconsult.net/data/compound/");
-                        context.put("owl", "http://www.w3.org/2002/07/owl#");
-                        context.put("ep", "https://apps.ideaconsult.net/data/endpoint/");
-                        context.put("owner", "https://apps.ideaconsult.net/data/owner/");
-                        context.put("xsd", "http://www.w3.org/2001/XMLSchema#");
-                        context.put("ad", "https://apps.ideaconsult.net/data/dataset/");
-                        context.put("ag", "https://apps.ideaconsult.net/data/algorithm/");
-                        context.put("af", "https://apps.ideaconsult.net/data/feature/");
-                        context.put("bao", "http://www.bioassayontology.org/bao#");
-                        JsonLdOptions options = new JsonLdOptions();
-                        options.useNamespaces = false;
-                        options.setExplicit(false);
-                        options.setCompactArrays(false);
-                        // Customise options...
-                        // Call whichever JSONLD function you want! (e.g. compact)
-                        Object compact = JsonLdProcessor.compact(jsonObject, context, options);
-                        return compact;
-                    }
-
-                    @Override
-                    public void onThrowable(Throwable t) {
-                    }
-
-                    @Override
-                    public State onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
-                        bytes.write(httpResponseBodyPart.getBodyPartBytes());
-                        bytes.flush();
-                        return State.CONTINUE;
-                    }
-                });
-
-        try {
-            return f.get();
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-        return result;
+    public CompletableFuture<BundleSubstances> getSubstancesByBundleId(String bundleId, String subjectId) {
+        String path = String.format(bundleSubstancesByIdPath, bundleId);
+        return get(path, subjectId, BundleSubstances.class);
     }
 
-    public BundleProperties getPropertiesByBundleId(String bundleId) {
-
-        String PATH = "https://apps.ideaconsult.net/enmtest/bundle";
-
-        BundleProperties result = null;
-        Future<BundleProperties> f = httpClient
-                .prepareGet(PATH + "/" + bundleId + "/property")
-                .addHeader("Accept", "application/json")
-                .execute(new AsyncHandler<BundleProperties>() {
-
-                    private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                    io.netty.handler.codec.http.HttpHeaders headers;
-
-                    @Override
-                    public State onStatusReceived(HttpResponseStatus status) throws Exception {
-                        int statusCode = status.getStatusCode();
-                        // The Status have been read
-                        // If you don't want to read the headers,body or stop processing the response
-                        if (statusCode >= 500) {
-                            return State.ABORT;
-                        }
-                        return State.CONTINUE;
-                    }
-
-                    @Override
-                    public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
-                        headers = h.getHeaders();
-                        // The headers have been read
-                        // If you don't want to read the body, or stop processing the response
-                        return State.CONTINUE;
-                    }
-
-                    @Override
-                    public BundleProperties onCompleted() throws Exception {
-                        // Will be invoked once the response has been fully read or a ResponseComplete exception
-                        // has been thrown.
-                        // NOTE: should probably use Content-Encoding from headers
-                        bytes.flush();
-                        System.out.println(bytes.toString());
-                        return mapper.readValue(bytes.toByteArray(), BundleProperties.class);
-                    }
-
-                    @Override
-                    public void onThrowable(Throwable t) {
-                    }
-
-                    @Override
-                    public State onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
-                        bytes.write(httpResponseBodyPart.getBodyPartBytes());
-                        bytes.flush();
-                        return State.CONTINUE;
-                    }
-                });
-        try {
-            result = f.get();
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-        return result;
+    public CompletableFuture<BundleProperties> getPropertiesByBundleId(String bundleId, String subjectId) {
+        String path = String.format(bundlePropertiesByIdPath, bundleId);
+        return get(path, subjectId, BundleProperties.class);
     }
 
+    public CompletableFuture<BundleData> getBundleById(String bundleId, String subjectId) {
+        String path = String.format(bundleByIdPath, bundleId);
+        return get(path, subjectId, BundleData.class);
+    }
+
+    public CompletableFuture<AmbitTask> putSubstanceByBundleId(String bundleId, String substanceURI, String subjectId) {
+        String path = String.format(bundleSubstancesByIdPath, bundleId);
+        MultiValuedMap<String, String> formParameters = new MultiValuedHashMap<>();
+        formParameters.putSingle("substance_uri", substanceURI);
+        formParameters.putSingle("command", "add");
+        return put(path, formParameters, subjectId, AmbitTaskArray.class)
+                .thenApply((ta) -> ta.getTask().get(0));
+    }
+
+    public CompletableFuture<AmbitTask> putPropertyByBundleId(String bundleId, String topCategory, String subCategory, String subjectId) {
+        String path = String.format(bundlePropertiesByIdPath, bundleId);
+        MultiValuedMap<String, String> formParameters = new MultiValuedHashMap<>();
+        formParameters.putSingle("topcategory", topCategory);
+        formParameters.putSingle("endpointcategory", subCategory);
+        formParameters.putSingle("command", "add");
+        return put(path, formParameters, subjectId, AmbitTaskArray.class)
+                .thenApply((ta) -> ta.getTask().get(0));
+    }
+
+//    public Object getBundleByJsonLD(String bundleId) {
+//
+//        BundleSubstances result = null;
+//
+//        Future<Object> f = httpClient
+//                .prepareGet(PATH + "/" + bundleId + "/substance")
+//                .addHeader("Accept", "application/ld+json")
+//                .execute(new AsyncHandler<Object>() {
+//
+//                    private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+//                    io.netty.handler.codec.http.HttpHeaders headers;
+//
+//                    @Override
+//                    public AsyncHandler.State onStatusReceived(HttpResponseStatus status) throws Exception {
+//                        int statusCode = status.getStatusCode();
+//                        // The Status have been read
+//                        // If you don't want to read the headers,body or stop processing the response
+//                        if (statusCode >= 500) {
+//                            return AsyncHandler.State.ABORT;
+//                        }
+//                        return AsyncHandler.State.CONTINUE;
+//                    }
+//
+//                    @Override
+//                    public AsyncHandler.State onHeadersReceived(HttpResponseHeaders h) throws Exception {
+//                        headers = h.getHeaders();
+//                        // The headers have been read
+//                        // If you don't want to read the body, or stop processing the response
+//                        return AsyncHandler.State.CONTINUE;
+//                    }
+//
+//                    @Override
+//                    public Object onCompleted() throws Exception {
+//                        // Will be invoked once the response has been fully read or a ResponseComplete exception
+//                        // has been thrown.
+//                        // NOTE: should probably use Content-Encoding from headers
+//                        bytes.flush();
+//                        //System.out.println(bytes.toString());
+//                        InputStream inputStream = new ByteArrayInputStream(bytes.toByteArray());
+//
+//                        Object jsonObject = JsonUtils.fromInputStream(inputStream);
+//                        Map<String, String> context = new HashMap<String, String>();
+//                        context.put("sso", "http://semanticscience.org/resource_consumers/");
+//                        context.put("otee", "http://www.opentox.org/echaEndpoints.owl#");
+//                        context.put("bx", "http://purl.org/net/nknouf/ns/bibtex#");
+//                        context.put("npo", "http://purl.bioontology.org/ontology/npo#");
+//                        context.put("dcterms", "http://purl.org/dc/terms/");
+//                        context.put("rdfs", "http://www.w3.org/2000/01/rdf-schema#");
+//                        context.put("substance", "https://apps.ideaconsult.net/data/substance/");
+//                        context.put("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
+//                        context.put("ot", "http://www.opentox.org/api/1.1#");
+//                        context.put("dc", "http://purl.org/dc/elements/1.1/");
+//                        context.put("enm", "http://purl.enanomapper.org/onto/");
+//                        context.put("foaf", "http://xmlns.com/foaf/0.1/");
+//                        context.put("ota", "http://www.opentox.org/algorithmTypes.owl#");
+//                        context.put("as", "https://apps.ideaconsult.net/data/assay/");
+//                        context.put("void", "http://rdfs.org/ns/void#");
+//                        context.put("mgroup", "https://apps.ideaconsult.net/data/measuregroup/");
+//                        context.put("obo", "http://purl.obolibrary.org/obo/");
+//                        context.put("ap", "https://apps.ideaconsult.net/data/protocol/");
+//                        context.put("am", "https://apps.ideaconsult.net/data/model/");
+//                        context.put("sio", "http://semanticscience.org/resource_consumers/");
+//                        context.put("ac", "https://apps.ideaconsult.net/data/compound/");
+//                        context.put("owl", "http://www.w3.org/2002/07/owl#");
+//                        context.put("ep", "https://apps.ideaconsult.net/data/endpoint/");
+//                        context.put("owner", "https://apps.ideaconsult.net/data/owner/");
+//                        context.put("xsd", "http://www.w3.org/2001/XMLSchema#");
+//                        context.put("ad", "https://apps.ideaconsult.net/data/dataset/");
+//                        context.put("ag", "https://apps.ideaconsult.net/data/algorithm/");
+//                        context.put("af", "https://apps.ideaconsult.net/data/feature/");
+//                        context.put("bao", "http://www.bioassayontology.org/bao#");
+//                        JsonLdOptions options = new JsonLdOptions();
+//                        options.useNamespaces = false;
+//                        options.setExplicit(false);
+//                        options.setCompactArrays(false);
+//                        // Customise options...
+//                        // Call whichever JSONLD function you want! (e.g. compact)
+//                        Object compact = JsonLdProcessor.compact(jsonObject, context, options);
+//                        return compact;
+//                    }
+//
+//                    @Override
+//                    public void onThrowable(Throwable t) {
+//                    }
+//
+//                    @Override
+//                    public AsyncHandler.State onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
+//                        bytes.write(httpResponseBodyPart.getBodyPartBytes());
+//                        bytes.flush();
+//                        return AsyncHandler.State.CONTINUE;
+//                    }
+//                });
+//
+//        try {
+//            return f.get();
+//        } catch (InterruptedException | ExecutionException e) {
+//            e.printStackTrace();
+//        }
+//        return result;
+//    }
 }

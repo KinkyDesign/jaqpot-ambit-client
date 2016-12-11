@@ -30,8 +30,6 @@
 
 package org.jaqpot.ambitclient.model;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.*;
 
@@ -42,7 +40,6 @@ import java.util.*;
  *
  */
 @XmlRootElement
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class MetaInfo {
 
     private Set<String> identifiers;

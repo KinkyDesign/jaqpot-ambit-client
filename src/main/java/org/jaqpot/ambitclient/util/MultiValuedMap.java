@@ -27,40 +27,16 @@
  *   with the aforementioned licence.
  *
  */
-
- /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package org.jaqpot.ambitclient.model.dto.bundle;
-
-import org.jaqpot.ambitclient.model.dataset.Substance;
+package org.jaqpot.ambitclient.util;
 
 import java.util.List;
+import java.util.Map;
 
 /**
- *
- * @author Pantelis Sopasakis
+ * @author Angelos Valsamis
  * @author Charalampos Chomenidis
- *
  */
-public class BundleSubstances {
+public interface MultiValuedMap<K, V> extends Map<K, List<V>> {
 
-    List<Substance> substance;
-
-    public List<Substance> getSubstance() {
-        return substance;
-    }
-
-    public void setSubstance(List<Substance> substance) {
-        this.substance = substance;
-    }
-
-    @Override
-    public String toString() {
-        return "BundleSubstances{"
-                + "substance=" + substance
-                + '}';
-    }
+    public void putSingle(K key, V value);
 }

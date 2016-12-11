@@ -27,35 +27,27 @@
 *   with the aforementioned licence.
 *
  */
-package org.jaqpot.ambitclient;
-
-import java.io.Closeable;
-import java.util.concurrent.CompletableFuture;
-
-import org.jaqpot.ambitclient.model.BundleData;
-import org.jaqpot.ambitclient.model.dataset.Dataset;
-import org.jaqpot.ambitclient.model.dto.bundle.BundleProperties;
-import org.jaqpot.ambitclient.model.dto.bundle.BundleSubstances;
-import org.jaqpot.ambitclient.model.dto.study.Studies;
+package org.jaqpot.ambitclient.exception;
 
 /**
  * @author Angelos Valsamis
  * @author Charalampos Chomenidis
  */
-public interface AmbitClient extends Closeable {
+public class AmbitClientException extends RuntimeException {
 
-    CompletableFuture<Dataset> generateMopacDescriptors(String pdbFile, String subjectId);
+    public AmbitClientException() {
+    }
 
-    CompletableFuture<Dataset> getDataset(String datasetId, String subjectId);
+    public AmbitClientException(String message) {
+        super(message);
+    }
 
-    CompletableFuture<Dataset> getDatasetStructures(String datasetId, String subjectId);
+    public AmbitClientException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-    CompletableFuture<BundleSubstances> getBundleSubstances(String bundleId, String subjectId);
-
-    CompletableFuture<BundleProperties> getBundleProperties(String bundleId, String subjectId);
-
-    CompletableFuture<Studies> getSubstanceStudies(String substanceId, String subjectId);
-
-    CompletableFuture<String> createBundle(BundleData bundleData, String username, String subjectId);
+    public AmbitClientException(Throwable cause) {
+        super(cause);
+    }
 
 }

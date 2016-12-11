@@ -29,40 +29,29 @@
  */
 package org.jaqpot.ambitclient;
 
-/**
- * Created by Angelos Valsamis on 11/10/2016.
- */
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.AsyncHttpClientConfig;
 import org.asynchttpclient.DefaultAsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClientConfig;
+import org.jaqpot.ambitclient.consumer.*;
+import org.jaqpot.ambitclient.serialize.Serializer;
 
-import javax.annotation.PreDestroy;
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.jaqpot.ambitclient.consumer.AlgorithmResourceConsumer;
-import org.jaqpot.ambitclient.consumer.BundleResourceConsumer;
-import org.jaqpot.ambitclient.consumer.DatasetResourceConsumer;
-import org.jaqpot.ambitclient.consumer.SubstanceResourceConsumer;
-import org.jaqpot.ambitclient.consumer.TaskResourceConsumer;
-
+/**
+ * @author Angelos Valsamis
+ * @author Charalampos Chomenidis
+ */
 public class AmbitClientFactory {
 
-    private static final Logger LOG = Logger.getLogger(AmbitClientFactory.class.getName());
-
-    public static AmbitClient createNewClient() {
-        ObjectMapper mapper = new ObjectMapper();
+    public static AmbitClient createNewClient(String basePath, Serializer serializer) {
         AsyncHttpClient httpClient = ClientFactory.INSTANCE.getClient();
 
-        DatasetResourceConsumer datasetConsumer = new DatasetResourceConsumer(mapper, httpClient);
-        AlgorithmResourceConsumer algorithmConsumer = new AlgorithmResourceConsumer(mapper, httpClient);
-        BundleResourceConsumer bundleConsumer = new BundleResourceConsumer(mapper, httpClient);
-        SubstanceResourceConsumer substanceConsumer = new SubstanceResourceConsumer(mapper, httpClient);
-        TaskResourceConsumer taskConsumer = new TaskResourceConsumer(mapper, httpClient);
-
-        AmbitClient client = new AmbitClientImpl(datasetConsumer, taskConsumer, algorithmConsumer, bundleConsumer, substanceConsumer);
+        DatasetResourceConsumer datasetConsumer = new DatasetResourceConsumer(serializer, httpClient, basePath);
+        AlgorithmResourceConsumer algorithmConsumer = new AlgorithmResourceConsumer(serializer, httpClient, basePath);
+        BundleResourceConsumer bundleConsumer = new BundleResourceConsumer(serializer, httpClient, basePath);
+        SubstanceResourceConsumer substanceConsumer = new SubstanceResourceConsumer(serializer, httpClient, basePath);
+        TaskResourceConsumer taskConsumer = new TaskResourceConsumer(serializer, httpClient, basePath);
+        SubstanceOwnerResourceConsumer substanceOwnerResourceConsumer = new SubstanceOwnerResourceConsumer(serializer, httpClient, basePath);
+        AmbitClient client = new AmbitClientImpl(datasetConsumer, taskConsumer, algorithmConsumer, bundleConsumer, substanceConsumer, substanceOwnerResourceConsumer, httpClient);
 
         return client;
     }
@@ -86,15 +75,6 @@ public class AmbitClientFactory {
 
         public AsyncHttpClient getClient() {
             return s;
-        }
-    }
-
-    @PreDestroy
-    public void destroy() {
-        try {
-            getClient().close();
-        } catch (IOException ex) {
-            LOG.log(Level.SEVERE, "Could not successfully close AmbitClient", ex);
         }
     }
 

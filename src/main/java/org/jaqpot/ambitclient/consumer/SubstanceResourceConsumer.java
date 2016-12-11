@@ -29,83 +29,33 @@
  */
 package org.jaqpot.ambitclient.consumer;
 
-import org.jaqpot.ambitclient.AmbitClientFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jaqpot.ambitclient.model.dto.study.Studies;
 import org.asynchttpclient.*;
 
-import java.io.ByteArrayOutputStream;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
+import org.jaqpot.ambitclient.serialize.Serializer;
 
-public class SubstanceResourceConsumer {
+/**
+ * @author Angelos Valsamis
+ * @author Charalampos Chomenidis
+ */
+public class SubstanceResourceConsumer extends BaseConsumer {
 
-    private final String PATH = "https://apps.ideaconsult.net/enmtest/substance";
+    private final static String STUDY_BY_ID = "substance/%s/study";
 
-    private final ObjectMapper mapper;
-    private final AsyncHttpClient httpClient;
+    private final String basePath;
+    private final String studyByIdPath;
 
-    public SubstanceResourceConsumer(ObjectMapper mapper, AsyncHttpClient httpClient) {
-        this.mapper = mapper;
-        this.httpClient = httpClient;
+    public SubstanceResourceConsumer(Serializer serializer, AsyncHttpClient httpClient, String basePath) {
+        super(httpClient, serializer);
+        this.basePath = basePath;
+        this.studyByIdPath = createPath(this.basePath, STUDY_BY_ID);
     }
 
-    public Studies getStudiesBySubstanceId(String substanceId) {
-        Studies result = null;
+    public CompletableFuture<Studies> getStudiesBySubstanceId(String substanceId, String subjectId) {
+        String path = String.format(studyByIdPath, substanceId);
 
-        Future<Studies> f = httpClient
-                .prepareGet(PATH + "/" + substanceId + "/study")
-                .addHeader("Accept", "application/json")
-                .execute(new AsyncHandler<Studies>() {
-
-                    private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                    io.netty.handler.codec.http.HttpHeaders headers;
-
-                    @Override
-                    public State onStatusReceived(HttpResponseStatus status) throws Exception {
-                        int statusCode = status.getStatusCode();
-                        // The Status have been read
-                        // If you don't want to read the headers,body or stop processing the response
-                        if (statusCode >= 500) {
-                            return AsyncHandler.State.ABORT;
-                        }
-                        return State.CONTINUE;
-                    }
-
-                    @Override
-                    public State onHeadersReceived(HttpResponseHeaders h) throws Exception {
-                        headers = h.getHeaders();
-                        // The headers have been read
-                        // If you don't want to read the body, or stop processing the response
-                        return State.CONTINUE;
-                    }
-
-                    @Override
-                    public Studies onCompleted() throws Exception {
-                        // Will be invoked once the response has been fully read or a ResponseComplete exception
-                        // has been thrown.
-                        // NOTE: should probably use Content-Encoding from headers
-                        bytes.flush();
-                        return mapper.readValue(bytes.toByteArray(), Studies.class);
-                    }
-
-                    @Override
-                    public void onThrowable(Throwable t) {
-                    }
-
-                    @Override
-                    public State onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
-                        bytes.write(httpResponseBodyPart.getBodyPartBytes());
-                        bytes.flush();
-                        return State.CONTINUE;
-                    }
-                });
-        try {
-            result = f.get();
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-        return result;
+        return get(path, subjectId, Studies.class);
     }
 
 }
