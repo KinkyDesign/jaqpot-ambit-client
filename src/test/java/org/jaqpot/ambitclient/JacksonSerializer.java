@@ -36,17 +36,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.util.List;
+
 import org.jaqpot.ambitclient.serialize.Serializer;
 
 /**
  * @author Angelos Valsamis
  * @author Charalampos Chomenidis
  */
-public class JacksonSerializer implements Serializer {
+class JacksonSerializer implements Serializer {
 
     private final ObjectMapper objectMapper;
 
-    public JacksonSerializer(ObjectMapper objectMapper) {
+    JacksonSerializer(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
         this.objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         this.objectMapper.setAnnotationIntrospector(new JaxbAnnotationIntrospector());
@@ -96,5 +98,4 @@ public class JacksonSerializer implements Serializer {
             throw new RuntimeException(ex);
         }
     }
-
 }

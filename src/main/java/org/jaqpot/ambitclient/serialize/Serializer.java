@@ -32,6 +32,7 @@ package org.jaqpot.ambitclient.serialize;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.util.List;
 
 /**
  * @author Angelos Valsamis
@@ -48,4 +49,5 @@ public interface Serializer {
     public <T> T parse(String content, Class<T> valueType);
 
     public <T> T parse(InputStream src, Class<T> valueType);
+
 }

@@ -29,14 +29,13 @@
  */
 package org.jaqpot.ambitclient.consumer;
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
-
 import org.asynchttpclient.AsyncHttpClient;
 import org.jaqpot.ambitclient.model.dataset.Substance;
 import org.jaqpot.ambitclient.model.dto.bundle.BundleSubstances;
 import org.jaqpot.ambitclient.serialize.Serializer;
+
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Angelos Valsamis
@@ -67,15 +66,12 @@ public class SubstanceOwnerResourceConsumer extends BaseConsumer {
         this.ownerStructuresByIdPath = createPath(this.basePath, SUBSTANCEOWNER_STRUCTURE_BY_ID);
     }
 
-    public CompletableFuture<List<String>> getOwnerSubstances(String ownerId, String subjectId) {
+    public CompletableFuture<List<Substance>> getOwnerSubstances(String ownerId, String subjectId) {
         String path = String.format(ownerSubstancesByIdPath, ownerId);
         return get(path, subjectId, BundleSubstances.class)
                 .thenApply((ta) -> {
                     if (ta.getSubstance() != null && !ta.getSubstance().isEmpty()) {
-                        return ta.getSubstance()
-                                .stream()
-                                .map(Substance::getURI)
-                                .collect(Collectors.toList());
+                        return ta.getSubstance();
                     }
                     return null;
                 });

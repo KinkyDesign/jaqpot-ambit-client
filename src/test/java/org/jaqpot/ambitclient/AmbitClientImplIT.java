@@ -29,18 +29,10 @@
  */
 package org.jaqpot.ambitclient;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-
 import org.jaqpot.ambitclient.model.BundleData;
 import org.jaqpot.ambitclient.model.dataset.Dataset;
-import org.jaqpot.ambitclient.model.dto.ambit.AmbitTask;
 import org.jaqpot.ambitclient.model.dto.bundle.BundleProperties;
 import org.jaqpot.ambitclient.model.dto.bundle.BundleSubstances;
 import org.jaqpot.ambitclient.model.dto.study.Studies;
@@ -48,7 +40,16 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import static org.junit.Assert.*;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
+import static org.junit.Assert.assertNotNull;
 
 /**
  * @author Angelos Valsamis
@@ -65,7 +66,7 @@ public class AmbitClientImplIT {
 
     @BeforeClass
     public static void setUpClass() {
-        client = AmbitClientFactory.createNewClient("https://apps.ideaconsult.net/enmtest", new JacksonSerializer(new ObjectMapper()));
+        client = AmbitClientFactory.createNewClient("https://data.enanomapper.net", new JacksonSerializer(new ObjectMapper()));
     }
 
     @AfterClass
@@ -92,6 +93,14 @@ public class AmbitClientImplIT {
     }
 
     @org.junit.Test
+    public void testGetDatasets() throws InterruptedException, ExecutionException {
+        System.out.println("getDatasets");
+        CompletableFuture<ArrayList<Dataset>> result = client.getDatasets(subjectId);
+        List<Dataset> datasetList = result.get();
+        assertNotNull(datasetList);
+    }
+
+    @org.junit.Test
     public void testGetDatasetById() throws InterruptedException, ExecutionException {
         System.out.println("getDatasetById");
         String datasetId = "1";
@@ -112,16 +121,16 @@ public class AmbitClientImplIT {
     @org.junit.Test
     public void testGetSubstances() throws InterruptedException, ExecutionException {
         System.out.println("getSubstances");
-        String bundleId = "15";
+        String bundleId = "1";
         CompletableFuture<BundleSubstances> result = client.getBundleSubstances(bundleId, subjectId);
         BundleSubstances subs = result.get();
         assertNotNull(subs);
     }
 
     @org.junit.Test
-    public void testGetStudiesBySubstanceId() throws InterruptedException, ExecutionException {
+    public void testGetStudiesBySubstanceId() throws InterruptedException, ExecutionException, JsonMappingException {
         System.out.println("getStudiesBySubstanceId");
-        String substanceId = "CNLB-e9b74719-ce6b-80c5-3371-48d12725db03";
+        String substanceId = "XLSX-7011cea0-1011-3f8b-9e8a-b3289fed836a";
         CompletableFuture<Studies> result = client.getSubstanceStudies(substanceId, subjectId);
         Studies studies = result.get();
         assertNotNull(studies);
@@ -142,13 +151,14 @@ public class AmbitClientImplIT {
         BundleData bundleData = new BundleData();
         String username = "guest";
         bundleData.setDescription("a bundle with protein corona data");
-        bundleData.setSubstanceOwner("CNLB-00B0A42C-3392-81F3-89F7-1F097956F48A");
+        bundleData.setSubstanceOwner("XLSX-4BB81F08-059D-32AD-B5FD-71C6BCC6E0DB");
         HashMap<String, List<String>> props = new HashMap<>();
         props.put("P-CHEM", Arrays.asList("PC_GRANULOMETRY_SECTION"));
         bundleData.setProperties(props);
         bundleData.setSubstances(null);
-        CompletableFuture<String> result = client.createBundle(bundleData, username, subjectId);
-        String resultS = result.get();
+        CompletableFuture<BundleData> result = client.createBundle(bundleData, subjectId);
+        BundleData resultS = result.get();
+        System.out.println(resultS);
         assertNotNull(resultS);
     }
 

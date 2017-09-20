@@ -29,6 +29,9 @@
  */
 package org.jaqpot.ambitclient.model;
 
+
+import org.jaqpot.ambitclient.model.dataset.Substance;
+
 import java.util.List;
 import java.util.Map;
 
@@ -42,7 +45,7 @@ public class BundleData {
     private String bundleUri;
     private String description;
     private String substanceOwner;
-    private List<String> substances;
+    private List<Substance> substances;
     private Map<String, List<String>> properties;
 
     public String getBundleId() {
@@ -77,11 +80,11 @@ public class BundleData {
         this.substanceOwner = substanceOwner;
     }
 
-    public List<String> getSubstances() {
+    public List<Substance> getSubstances() {
         return substances;
     }
 
-    public void setSubstances(List<String> substances) {
+    public void setSubstances(List<Substance> substances) {
         this.substances = substances;
     }
 

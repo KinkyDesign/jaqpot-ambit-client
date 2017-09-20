@@ -29,19 +29,23 @@
  */
 package org.jaqpot.ambitclient.consumer;
 
-import org.jaqpot.ambitclient.model.dataset.Dataset;
-import org.jaqpot.ambitclient.model.dto.ambit.AmbitTask;
 import org.asynchttpclient.*;
 import org.asynchttpclient.request.body.multipart.ByteArrayPart;
+import org.asynchttpclient.request.body.multipart.Part;
+import org.jaqpot.ambitclient.exception.AmbitClientException;
+import org.jaqpot.ambitclient.model.dataset.Dataset;
+import org.jaqpot.ambitclient.model.dto.ambit.AmbitTask;
+import org.jaqpot.ambitclient.model.dto.ambit.AmbitTaskArray;
+import org.jaqpot.ambitclient.serialize.Serializer;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.SequenceInputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import org.asynchttpclient.request.body.multipart.Part;
-import org.jaqpot.ambitclient.model.dto.ambit.AmbitTaskArray;
-import org.jaqpot.ambitclient.serialize.Serializer;
 
 /**
  * @author Angelos Valsamis
