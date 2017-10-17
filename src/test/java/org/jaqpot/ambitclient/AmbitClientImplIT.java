@@ -36,6 +36,7 @@ import org.jaqpot.ambitclient.model.dataset.Dataset;
 import org.jaqpot.ambitclient.model.dto.bundle.BundleProperties;
 import org.jaqpot.ambitclient.model.dto.bundle.BundleSubstances;
 import org.jaqpot.ambitclient.model.dto.study.Studies;
+import org.jaqpot.ambitclient.model.dto.study.Substance;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -66,7 +67,9 @@ public class AmbitClientImplIT {
 
     @BeforeClass
     public static void setUpClass() {
-        client = AmbitClientFactory.createNewClient("https://data.enanomapper.net", new JacksonSerializer(new ObjectMapper()));
+        client = AmbitClientFactory.createNewClient("https://apps.ideaconsult.net/enmtest", new JacksonSerializer(new ObjectMapper()));
+
+        //client = AmbitClientFactory.createNewClient("https://data.enanomapper.net", new JacksonSerializer(new ObjectMapper()));
     }
 
     @AfterClass
@@ -90,14 +93,6 @@ public class AmbitClientImplIT {
         CompletableFuture<Dataset> result = client.generateMopacDescriptors(pdbFile, subjectId);
         Dataset dataset = result.get();
         assertNotNull(dataset);
-    }
-
-    @org.junit.Test
-    public void testGetDatasets() throws InterruptedException, ExecutionException {
-        System.out.println("getDatasets");
-        CompletableFuture<ArrayList<Dataset>> result = client.getDatasets(subjectId);
-        List<Dataset> datasetList = result.get();
-        assertNotNull(datasetList);
     }
 
     @org.junit.Test
@@ -151,15 +146,14 @@ public class AmbitClientImplIT {
         BundleData bundleData = new BundleData();
         String username = "guest";
         bundleData.setDescription("a bundle with protein corona data");
-        bundleData.setSubstanceOwner("XLSX-4BB81F08-059D-32AD-B5FD-71C6BCC6E0DB");
+            bundleData.setSubstanceOwner("NWKI-9F4E86D0-C85D-3E83-8249-A856659087DA");
         HashMap<String, List<String>> props = new HashMap<>();
         props.put("P-CHEM", Arrays.asList("PC_GRANULOMETRY_SECTION"));
         bundleData.setProperties(props);
         bundleData.setSubstances(null);
-        CompletableFuture<BundleData> result = client.createBundle(bundleData, subjectId);
-        BundleData resultS = result.get();
+        CompletableFuture<List<org.jaqpot.ambitclient.model.dataset.Substance>> result = client.getSubstancesBySubstanceOwner("NWKI-9F4E86D0-C85D-3E83-8249-A856659087DA", subjectId);
+        List<org.jaqpot.ambitclient.model.dataset.Substance> resultS = result.get();
         System.out.println(resultS);
         assertNotNull(resultS);
     }
-
 }

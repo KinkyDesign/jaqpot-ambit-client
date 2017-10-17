@@ -38,10 +38,10 @@
 
     <groupId>org.jaqpot</groupId>
     <artifactId>ambit-client</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.2</version>
     <packaging>jar</packaging>
-
     <name>jaqpot-ambit-client</name>
+
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -86,4 +86,32 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>thirdparty</id>
+            <url>http://app.jaqpot.org:8081/repository/thirdparty/</url>
+        </repository>
+        <repository>
+            <id>snapshots</id>
+            <url>http://app.jaqpot.org:8081/repository/snapshots/</url>
+        </repository>
+        <repository>
+            <id>releases</id>
+            <url>http://app.jaqpot.org:8081/repository/maven-releases/</url>
+        </repository>
+    </repositories>
+
+    <distributionManagement>
+        <repository>
+            <id>deployment</id>
+            <name>Internal Releases</name>
+            <url>http://app.jaqpot.org:8081/repository/maven-releases/</url>
+        </repository>
+       <!-- <snapshotRepository>
+            <id>deployment</id>
+            <name>Internal Releases</name>
+            <url>http://app.jaqpot.org:8081/repository/snapshots/</url>
+        </snapshotRepository>-->
+    </distributionManagement>
 </project>

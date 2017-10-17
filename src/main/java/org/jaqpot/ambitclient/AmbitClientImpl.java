@@ -108,55 +108,46 @@ public class AmbitClientImpl implements AmbitClient {
     }
 
     @Override
-    public CompletableFuture<BundleData> createBundle(BundleData bundleData, String subjectId) {
-        String substanceOwner = bundleData.getSubstanceOwner();
+    public CompletableFuture<List<Substance>> getSubstancesBySubstanceOwner(String substanceOwner, String subjectId) {
         if (substanceOwner == null || substanceOwner.isEmpty()) {
             throw new AmbitClientException("Field substanceOwner cannot be empty.");
         }
         CompletableFuture<List<Substance>> result;
-        if (bundleData.getSubstances() == null || bundleData.getSubstances().isEmpty()) {
-            result = substanceOwnerResourceConsumer.getOwnerSubstances(bundleData.getSubstanceOwner(), subjectId);
-        }
-        else {
-            result = CompletableFuture.supplyAsync(bundleData::getSubstances);
-        }
+        BundleData bundleData = new BundleData();
+        bundleData.setSubstanceOwner(substanceOwner);
+        return substanceOwnerResourceConsumer.getOwnerSubstances(substanceOwner, subjectId);
 
-        return
+        /*return
                 result
-                        .thenApply((substances) -> {
-                            bundleData.setSubstances(substances);
-                            Map<String, List<String>> properties = bundleData.getProperties();
-                            if (properties == null || properties.isEmpty()) {
-                                properties = new HashMap<>();
-                                for (ProtocolCategory category : ProtocolCategory.values()) {
-                                    String topCategoryName = category.getTopCategory();
-                                    String categoryName = category.name();
+                .thenApply((substances) -> {
+                    bundleData.setSubstances(substances);
+                    Map<String, List<String>> properties = bundleData.getProperties();
+                    if (properties == null || properties.isEmpty()) {
+                        properties = new HashMap<>();
+                        for (ProtocolCategory category : ProtocolCategory.values()) {
+                            String topCategoryName = category.getTopCategory();
+                            String categoryName = category.name();
 
-                                    if (properties.containsKey(topCategoryName)) {
-                                        List<String> categoryValues = properties.get(topCategoryName);
-                                        categoryValues.add(categoryName);
-                                        properties.put(topCategoryName, categoryValues);
-                                    } else {
-                                        List<String> categoryValues = new ArrayList<>();
-                                        categoryValues.add(categoryName);
-                                        properties.put(topCategoryName, categoryValues);
-                                    }
-                                }
+                            if (properties.containsKey(topCategoryName)) {
+                                List<String> categoryValues = properties.get(topCategoryName);
+                                categoryValues.add(categoryName);
+                                properties.put(topCategoryName, categoryValues);
+                            } else {
+                                List<String> categoryValues = new ArrayList<>();
+                                categoryValues.add(categoryName);
+                                properties.put(topCategoryName, categoryValues);
                             }
-                            bundleData.setProperties(properties);
-                            return bundleData;
-                        });
+                        }
+                    }
+                    bundleData.setProperties(properties);
+                    return bundleData;
+                });*/
     }
 
 
     @Override
     public CompletableFuture<Dataset> getDataset(String datasetId, String subjectId) {
         return datasetConsumer.getDatasetById(datasetId, subjectId);
-    }
-
-    @Override
-    public CompletableFuture<ArrayList<Dataset>> getDatasets(String subjectId) {
-        return datasetConsumer.getDatasets(subjectId);
     }
 
     @Override
