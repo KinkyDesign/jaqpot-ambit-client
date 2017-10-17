@@ -108,16 +108,16 @@ public class AmbitClientImpl implements AmbitClient {
     }
 
     @Override
-    public CompletableFuture<List<Substance>> getSubstancesBySubstanceOwner(String substanceOwner, String subjectId) {
+    public CompletableFuture<BundleData> getSubstancesBySubstanceOwner(String substanceOwner, String subjectId) {
         if (substanceOwner == null || substanceOwner.isEmpty()) {
             throw new AmbitClientException("Field substanceOwner cannot be empty.");
         }
         CompletableFuture<List<Substance>> result;
         BundleData bundleData = new BundleData();
         bundleData.setSubstanceOwner(substanceOwner);
-        return substanceOwnerResourceConsumer.getOwnerSubstances(substanceOwner, subjectId);
+        result= substanceOwnerResourceConsumer.getOwnerSubstances(substanceOwner, subjectId);
 
-        /*return
+        return
                 result
                 .thenApply((substances) -> {
                     bundleData.setSubstances(substances);
@@ -141,7 +141,7 @@ public class AmbitClientImpl implements AmbitClient {
                     }
                     bundleData.setProperties(properties);
                     return bundleData;
-                });*/
+                });
     }
 
 

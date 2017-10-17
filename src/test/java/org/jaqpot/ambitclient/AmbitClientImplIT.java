@@ -151,8 +151,8 @@ public class AmbitClientImplIT {
         props.put("P-CHEM", Arrays.asList("PC_GRANULOMETRY_SECTION"));
         bundleData.setProperties(props);
         bundleData.setSubstances(null);
-        CompletableFuture<List<org.jaqpot.ambitclient.model.dataset.Substance>> result = client.getSubstancesBySubstanceOwner("NWKI-9F4E86D0-C85D-3E83-8249-A856659087DA", subjectId);
-        List<org.jaqpot.ambitclient.model.dataset.Substance> resultS = result.get();
+        CompletableFuture<BundleData> result = client.getSubstancesBySubstanceOwner("NWKI-9F4E86D0-C85D-3E83-8249-A856659087DA", subjectId);
+        BundleData resultS = result.get();
         System.out.println(resultS);
         assertNotNull(resultS);
     }

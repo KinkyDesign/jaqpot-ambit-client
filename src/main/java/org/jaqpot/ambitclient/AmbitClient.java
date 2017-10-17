@@ -29,15 +29,13 @@
  */
 package org.jaqpot.ambitclient;
 
+import org.jaqpot.ambitclient.model.BundleData;
 import org.jaqpot.ambitclient.model.dataset.Dataset;
-import org.jaqpot.ambitclient.model.dataset.Substance;
 import org.jaqpot.ambitclient.model.dto.bundle.BundleProperties;
 import org.jaqpot.ambitclient.model.dto.bundle.BundleSubstances;
 import org.jaqpot.ambitclient.model.dto.study.Studies;
 
-
 import java.io.Closeable;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -58,6 +56,6 @@ public interface AmbitClient extends Closeable {
 
     CompletableFuture<Studies> getSubstanceStudies(String substanceId, String subjectId);
 
-    CompletableFuture<List<Substance>> getSubstancesBySubstanceOwner(String substanceOwner, String subjectId);
+    CompletableFuture<BundleData> getSubstancesBySubstanceOwner(String substanceOwner, String subjectId);
 
 }
