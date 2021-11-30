@@ -29,7 +29,7 @@
  */
 package org.jaqpot.ambitclient.model;
 
-import javax.xml.bind.annotation.XmlRootElement;
+//import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  *
@@ -37,7 +37,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  * @author Charalampos Chomenidis
  *
  */
-@XmlRootElement
+//@XmlRootElement
 public class FeatureValue extends JaqpotEntity {
 
     public FeatureValue() {

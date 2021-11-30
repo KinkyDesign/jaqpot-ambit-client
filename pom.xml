@@ -38,7 +38,7 @@
 
     <groupId>org.jaqpot</groupId>
     <artifactId>ambit-client</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <packaging>jar</packaging>
     <name>jaqpot-ambit-client</name>
 
@@ -90,15 +90,15 @@
     <repositories>
         <repository>
             <id>thirdparty</id>
-            <url>http://app.jaqpot.org:8081/repository/thirdparty/</url>
+            <url>https://nexus.jaqpot.org/repository/thirdparty/</url>
         </repository>
         <repository>
             <id>snapshots</id>
-            <url>http://app.jaqpot.org:8081/repository/snapshots/</url>
+            <url>https://nexus.jaqpot.org/repository/snapshots/</url>
         </repository>
         <repository>
             <id>releases</id>
-            <url>http://app.jaqpot.org:8081/repository/maven-releases/</url>
+            <url>https://nexus.jaqpot.org/repository/maven-releases/</url>
         </repository>
     </repositories>
 
@@ -106,12 +106,12 @@
         <repository>
             <id>deployment</id>
             <name>Internal Releases</name>
-            <url>http://app.jaqpot.org:8081/repository/maven-releases/</url>
+            <url>https://nexus.jaqpot.org/repository/maven-releases/</url>
         </repository>
        <!-- <snapshotRepository>
             <id>deployment</id>
             <name>Internal Releases</name>
-            <url>http://app.jaqpot.org:8081/repository/snapshots/</url>
+            <url>https://nexus.jaqpot.org/repository/snapshots/</url>
         </snapshotRepository>-->
     </distributionManagement>
 </project>

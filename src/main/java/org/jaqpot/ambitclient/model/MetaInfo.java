@@ -30,7 +30,7 @@
 
 package org.jaqpot.ambitclient.model;
 
-import javax.xml.bind.annotation.XmlRootElement;
+//import javax.xml.bind.annotation.XmlRootElement;
 import java.util.*;
 
 /**
@@ -39,7 +39,7 @@ import java.util.*;
  * @author Charalampos Chomenidis
  *
  */
-@XmlRootElement
+//@XmlRootElement
 public class MetaInfo {
 
     private Set<String> identifiers;

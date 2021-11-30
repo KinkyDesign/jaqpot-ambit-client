@@ -29,7 +29,7 @@
  */
 package org.jaqpot.ambitclient.model.dataset;
 
-import javax.xml.bind.annotation.XmlElement;
+//import javax.xml.bind.annotation.XmlElement;
 
 /**
  *
@@ -39,17 +39,17 @@ import javax.xml.bind.annotation.XmlElement;
  */
 public class Substance {
 
-    @XmlElement(name = "URI")
+//    @XmlElement(name = "URI")
     String URI;
     String name;
     String ownerUUID;
 
-    @XmlElement(name = "URI")
+//    @XmlElement(name = "URI")
     public String getURI() {
         return URI;
     }
 
-    @XmlElement(name = "URI")
+//    @XmlElement(name = "URI")
     public void setURI(String URI) {
         this.URI = URI;
     }

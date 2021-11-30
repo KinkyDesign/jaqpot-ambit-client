@@ -29,7 +29,7 @@
  */
 package org.jaqpot.ambitclient.model.dataset;
 
-import javax.xml.bind.annotation.XmlRootElement;
+//import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -39,7 +39,7 @@ import java.util.TreeMap;
  * @author Charalampos Chomenidis
  *
  */
-@XmlRootElement
+//@XmlRootElement
 public class DataEntry {
 
     Substance compound;

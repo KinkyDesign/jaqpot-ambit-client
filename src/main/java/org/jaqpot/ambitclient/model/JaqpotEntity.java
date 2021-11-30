@@ -29,11 +29,11 @@
  */
 package org.jaqpot.ambitclient.model;
 
-import javax.xml.bind.annotation.XmlRootElement;
+//import javax.xml.bind.annotation.XmlRootElement;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import javax.xml.bind.annotation.XmlAttribute;
+//import javax.xml.bind.annotation.XmlAttribute;
 
 /**
  *
@@ -41,7 +41,7 @@ import javax.xml.bind.annotation.XmlAttribute;
  * @author Charalampos Chomenidis
  *
  */
-@XmlRootElement
+//@XmlRootElement
 public abstract class JaqpotEntity {
 
     /**
@@ -79,12 +79,12 @@ public abstract class JaqpotEntity {
         this.ontologicalClasses = other.ontologicalClasses != null ? new HashSet<>(other.ontologicalClasses) : null;
     }
 
-    @XmlAttribute(name = "_id")
+//    @XmlAttribute(name = "_id")
     public String getId() {
         return id;
     }
 
-    @XmlAttribute(name = "_id")
+//    @XmlAttribute(name = "_id")
     public void setId(String id) {
         this.id = id;
     }

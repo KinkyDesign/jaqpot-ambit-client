@@ -31,7 +31,7 @@ package org.jaqpot.ambitclient.model.dataset;
 
 import org.jaqpot.ambitclient.model.JaqpotEntity;
 
-import javax.xml.bind.annotation.XmlRootElement;
+//import javax.xml.bind.annotation.XmlRootElement;
 import java.util.List;
 import java.util.Set;
 
@@ -41,7 +41,7 @@ import java.util.Set;
  * @author Charalampos Chomenidis
  *
  */
-@XmlRootElement
+//@XmlRootElement
 public class Dataset extends JaqpotEntity {
 
     public enum DescriptorCategory {
